@@ -1,7 +1,37 @@
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> first commit
+### Eclipse ###
+.classpath
+.project
+.settings/
+.classpath
+
+bin/
+gen/
+local.properties
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out
+
+### NetBeans ###
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+### Maven ###
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -14,16 +44,19 @@ buildNumber.properties
 
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 !/.mvn/wrapper/maven-wrapper.jar
-<<<<<<< HEAD
-=======
-=======
+
 # General
 .DS_Store
 .AppleDouble
 .LSOverride
+Thumbs.db
+*.bak
+*.tem
+*.temp
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -43,5 +76,3 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
->>>>>>> first commit
->>>>>>> first commit
