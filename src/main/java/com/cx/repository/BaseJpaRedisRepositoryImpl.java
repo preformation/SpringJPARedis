@@ -1,8 +1,12 @@
 package com.cx.repository;
 
 import com.cx.entity.RedisEntity;
+import com.cx.service.impl.RedisService;
 import com.cx.utils.BeanHelper;
 import com.cx.utils.Const;
+import com.google.common.collect.Lists;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,17 +40,20 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 
     private final RedisTemplate<String, ?> redisTemplate;
 
+	private final RedisService redisService;
+
     private final BeanUtilsHashMapper<T> beanUtilsHashMapper;
 
     private final EntityManager em;
 
     private final Class<T> clazz;
 
-    public BaseJpaRedisRepositoryImpl(Class<T> domainClass, EntityManager entityManager, RedisTemplate<String, ?> redisTemplate) {
+    public BaseJpaRedisRepositoryImpl(Class<T> domainClass, EntityManager entityManager, RedisTemplate<String, ?> redisTemplate, RedisService redisService) {
         super(domainClass, entityManager);
         this.clazz = domainClass;
         this.em = entityManager;
         this.redisTemplate = redisTemplate;
+        this.redisService = redisService;
         beanUtilsHashMapper = new BeanUtilsHashMapper(domainClass);
     }
 
@@ -215,8 +222,9 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	}
 
 	public List<T> findAll() {
-		Set<String> entitykeys = entityKeys();
-		final List<T> finalEntities = new ArrayList<T>();
+		String idskey = key("findAll", null, null);
+		List<String> entitykeys = entityKeys(idskey);
+		final List<T> finalEntities = Lists.newArrayListWithCapacity(20);
 		try {
 		    if(!CollectionUtils.isEmpty(entitykeys)) {
 //            finalEntities = (List<T>)redisTemplate.opsForValue().multiGet(entitykeys);
@@ -238,8 +246,10 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 				return ts;
 			}
 
+			List<String> ids = Lists.newArrayListWithCapacity(20);
 			ts.stream().forEach(t ->
 				{
+					ids.add(t.getId()+"");
 					BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
 					BeanHelper.registerConvertUtils();
                     Map<String, String> map = beanUtilsHashMapper.toHash(t);
@@ -249,6 +259,9 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
                 }
 			);
 
+			redisService.delete(idskey);
+			redisService.putListCache(idskey, ids);
+
 			return ts;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -256,19 +269,43 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	}
 
 	public List<T> findAll(Iterable<ID> ids) {
-		List<T> entities = new ArrayList<T>();
+        String idskey = key("findAll", new String[]{"ids"}, new Object[]{ids});
+        List<String> entitykeys = entityKeys(idskey);
+        final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
+        List<String> idList = Lists.newArrayListWithCapacity(20);
 		ids.forEach(id -> {
+            idList.add(id+"");
 			T entity = getOnlyOne(key(id));
 			if(Objects.nonNull(entity)){
-				entities.add(entity);
+                finalEntities.add(entity);
 			}
 		});
 
-		if(!CollectionUtils.isEmpty(entities)){
-			return entities;
+		if(!CollectionUtils.isEmpty(finalEntities)){
+			return finalEntities;
 		}
 
-		return super.findAll(ids);
+		final List<T> ts = super.findAll(ids);
+
+		if(CollectionUtils.isEmpty(ts)){
+			return ts;
+		}
+
+		ts.stream().forEach(t ->
+				{
+					BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
+					BeanHelper.registerConvertUtils();
+					Map<String, String> map = beanUtilsHashMapper.toHash(t);
+					map.entrySet().stream().forEach(item -> {
+						operations.put(item.getKey(), item.getValue());
+					});
+				}
+		);
+
+        redisService.delete(idskey);
+        redisService.putListCache(idskey, idList);
+
+		return ts;
 	}
 
 	public List<T> findAll(Sort sort) {
@@ -382,8 +419,46 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 		return keyspace() + ":ids:" + id;
 	}
 
+	/**
+	 * findAll缓存key
+	 * @param methodname
+	 * @param paramnames 第一个，第二个，...依次排列
+	 * @param paramvals 第一个，第二个，...依次排列，和paramnames的顺序一致
+	 * @return
+	 */
+	public String key(String methodname, String[] paramnames, Object[] paramvals){
+		StringBuffer sb = new StringBuffer(keyspace());
+		sb.append(":finds").append(StringUtils.isBlank(methodname)? "" : ":"+methodname);
+		if(ArrayUtils.isNotEmpty(paramnames) && ArrayUtils.isNotEmpty(paramvals)) {
+			Arrays.stream(paramnames).forEach(fieldname -> {
+				sb.append(":"+fieldname);
+			});
+
+			Arrays.stream(paramvals).forEach(paramval -> {
+				if(paramval instanceof List){
+					Collections.sort((List)paramval);
+				}
+				if(paramval instanceof Object[]) {
+					Arrays.sort((Object[])paramval);
+				}
+				sb.append(":"+paramval.hashCode());
+			});
+		}
+
+		return sb.toString();
+	}
+
 	private Set<String> entityKeys() {
 		return redisTemplate.keys(keyspace() + ":ids:*");
+	}
+
+	private List<String> entityKeys(String key){
+		Boolean hasKey = redisTemplate.hasKey(key);
+		if(!hasKey){
+			return null;
+		}
+
+		return redisService.getListCache(key, String.class);
 	}
 
     private T getOnlyOne(String key){

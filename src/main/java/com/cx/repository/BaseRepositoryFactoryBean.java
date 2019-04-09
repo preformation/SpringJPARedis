@@ -1,6 +1,7 @@
 package com.cx.repository;
 
 import com.cx.entity.RedisEntity;
+import com.cx.service.impl.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.support.JpaEntityInformationSupport;
 import org.springframework.data.jpa.repository.support.JpaRepositoryFactory;
@@ -28,6 +29,8 @@ public class BaseRepositoryFactoryBean<R extends Repository<T, ID>, T extends Re
     @Autowired
     private RedisTemplate<String, ?> redisTemplate;
     @Autowired
+    private RedisService redisService;
+    @Autowired
     private SecurecyPostProcessor<T, ID> securecyPostProcessor;
 
     private final Class<? extends R> repositoryInterface;
@@ -44,7 +47,7 @@ public class BaseRepositoryFactoryBean<R extends Repository<T, ID>, T extends Re
 
     @Override
     protected RepositoryFactorySupport createRepositoryFactory(EntityManager em) {
-        BaseRepositoryFactory baseRepositoryFactory = new BaseRepositoryFactory<T, ID>(em, redisTemplate, repositoryInterface);
+        BaseRepositoryFactory baseRepositoryFactory = new BaseRepositoryFactory<T, ID>(em, redisTemplate, redisService, repositoryInterface);
         baseRepositoryFactory.addRepositoryProxyPostProcessor(securecyPostProcessor);
         return baseRepositoryFactory;
     }
@@ -58,12 +61,14 @@ public class BaseRepositoryFactoryBean<R extends Repository<T, ID>, T extends Re
 
         private final EntityManager em;
         private final RedisTemplate<String, ?> redisTemplate;
+        private final RedisService redisService;
         private final Class<? extends R> repositoryInterface;
 
-        public BaseRepositoryFactory(EntityManager em, RedisTemplate<String, ?> redisTemplate, Class<? extends R> repositoryInterface) {
+        public BaseRepositoryFactory(EntityManager em, RedisTemplate<String, ?> redisTemplate, RedisService redisService, Class<? extends R> repositoryInterface) {
             super(em);
             this.em = em;
             this.redisTemplate = redisTemplate;
+            this.redisService = redisService;
             this.repositoryInterface = repositoryInterface;
         }
 
@@ -77,9 +82,9 @@ public class BaseRepositoryFactoryBean<R extends Repository<T, ID>, T extends Re
             Class<T> domainClass = (Class<T>) information.getDomainType();
             final SimpleJpaRepository<T, ID> repository;
             if (isQueryDslExecutor(repositoryInterface)) {
-                repository = new BaseQueryDslJpaRepository(JpaEntityInformationSupport.getEntityInformation(domainClass, em), domainClass, em, redisTemplate);
+                repository = new BaseQueryDslJpaRepository(JpaEntityInformationSupport.getEntityInformation(domainClass, em), domainClass, em, redisTemplate, redisService);
             } else {
-                repository = new BaseJpaRedisRepositoryImpl<T, ID>(domainClass, em, redisTemplate);
+                repository = new BaseJpaRedisRepositoryImpl<T, ID>(domainClass, em, redisTemplate, redisService);
             }
 
             return repository;

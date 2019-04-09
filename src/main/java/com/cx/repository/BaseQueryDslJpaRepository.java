@@ -1,5 +1,6 @@
 package com.cx.repository;
 
+import com.cx.service.impl.RedisService;
 import com.cx.utils.BeanHelper;
 import com.cx.utils.Const;
 import com.querydsl.core.types.EntityPath;
@@ -50,6 +51,8 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
 
     private final RedisTemplate<String, ?> redisTemplate;
 
+	private final RedisService redisService;
+
     private final BeanUtilsHashMapper<T> beanUtilsHashMapper;
 
     private final EntityManager em;
@@ -63,7 +66,7 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
 	 * @param entityInformation must not be {@literal null}.
 	 * @param entityManager must not be {@literal null}.
 	 */
-	public BaseQueryDslJpaRepository(JpaEntityInformation<T, ID> entityInformation, Class<T> domainClass, EntityManager entityManager, RedisTemplate<String, ?> redisTemplate) {
+	public BaseQueryDslJpaRepository(JpaEntityInformation<T, ID> entityInformation, Class<T> domainClass, EntityManager entityManager, RedisTemplate<String, ?> redisTemplate, RedisService redisService) {
 		super(entityInformation, entityManager);
 		this.path = DEFAULT_ENTITY_PATH_RESOLVER.createPath(entityInformation.getJavaType());
 		this.builder = new PathBuilder<T>(path.getType(), path.getMetadata());
@@ -72,6 +75,7 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
         this.clazz = domainClass;
         this.em = entityManager;
         this.redisTemplate = redisTemplate;
+        this.redisService = redisService;
         beanUtilsHashMapper = new BeanUtilsHashMapper(domainClass);
 	}
 

@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundHashOperations;
-import org.springframework.data.redis.core.BoundListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.hash.BeanUtilsHashMapper;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -182,9 +181,11 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
                         }
                 );
 
-                BoundListOperations operations = redisTemplate.boundListOps(idskey);
-                operations.getOperations().delete(idskey);
-                operations.rightPushAll(ids.toArray());
+                redisService.delete(idskey);
+                redisService.putListCache(idskey, ids);
+//                BoundListOperations operations = redisTemplate.boundListOps(idskey);
+//                operations.getOperations().delete(idskey);
+//                operations.rightPushAll(ids.toArray());
 
                 return (List<T>) entities;
             } catch (Exception e) {
@@ -201,7 +202,7 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
         }
 
         /**
-         * findby缓存key
+         * findBy缓存key
          * @param methodname
          * @param paramnames 第一个，第二个，...依次排列
          * @param paramvals 第一个，第二个，...依次排列，和paramnames的顺序一致
@@ -235,8 +236,9 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
                 return null;
             }
 
-            BoundListOperations<String, ?> operations = redisTemplate.boundListOps(key);
-            return (List<String>)operations.range(0, -1);
+            return redisService.getListCache(key, String.class);
+//            BoundListOperations<String, ?> operations = redisTemplate.boundListOps(key);
+//            return (List<String>)operations.range(0, -1);
         }
 
         private T getOnlyOne(String key){
