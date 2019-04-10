@@ -229,7 +229,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 		    if(!CollectionUtils.isEmpty(entitykeys)) {
 //            finalEntities = (List<T>)redisTemplate.opsForValue().multiGet(entitykeys);
                 entitykeys.stream().forEach(key -> {
-                    T entity = getOnlyOne(key);
+                    T entity = getOnlyOne(key(key));
                     if (Objects.nonNull(entity)) {
                         finalEntities.add(entity);
                     }
@@ -420,6 +420,10 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	}
 
 	private String key(ID id){
+		return keyspace() + ":ids:" + id;
+	}
+
+	private String key(String id){
 		return keyspace() + ":ids:" + id;
 	}
 
