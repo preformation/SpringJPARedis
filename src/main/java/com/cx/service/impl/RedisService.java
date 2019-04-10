@@ -11,6 +11,8 @@ import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -1388,7 +1390,11 @@ public class RedisService {
      * @return
      */
     public <T> boolean putListCacheWithExpireTime(String key, List<T> objList, final long expireTime) {
-        final byte[] bkey = key.getBytes();
+		if(CollectionUtils.isEmpty(objList)){
+			return false;
+		}
+
+		final byte[] bkey = key.getBytes();
         final byte[] bvalue = ProtoStuffUtil.serializeList(objList);
         boolean result = redisTemplate.execute(new RedisCallback<Boolean>() {
             @Override
@@ -1408,6 +1414,10 @@ public class RedisService {
 	 * @return
 	 */
 	public <T> boolean putListCache(String key, List<T> objList) {
+		if(CollectionUtils.isEmpty(objList)){
+			return false;
+		}
+
 		final byte[] bkey = key.getBytes();
 		final byte[] bvalue = ProtoStuffUtil.serializeList(objList);
 		boolean result = redisTemplate.execute(new RedisCallback<Boolean>() {
@@ -1449,6 +1459,10 @@ public class RedisService {
      * @return
      */
     public <T> boolean putObjCacheWithExpireTime(String key, T obj, final long expireTime) {
+		if(ObjectUtils.isEmpty(obj)){
+			return false;
+		}
+
         final byte[] bkey = key.getBytes();
         final byte[] bvalue = ProtoStuffUtil.serialize(obj);
         boolean result = redisTemplate.execute(new RedisCallback<Boolean>() {
@@ -1469,6 +1483,10 @@ public class RedisService {
 	 * @return
 	 */
 	public <T> boolean putObjCache(String key, T obj) {
+		if(ObjectUtils.isEmpty(obj)){
+			return false;
+		}
+
 		final byte[] bkey = key.getBytes();
 		final byte[] bvalue = ProtoStuffUtil.serialize(obj);
 		boolean result = redisTemplate.execute(new RedisCallback<Boolean>() {
