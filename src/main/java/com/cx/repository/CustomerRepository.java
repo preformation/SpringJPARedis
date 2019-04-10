@@ -1,6 +1,9 @@
 package com.cx.repository;
 
+import com.cx.dto.CustomerDto;
 import com.cx.entity.Customer;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -22,4 +25,12 @@ public interface CustomerRepository extends BaseJpaRedisRepository<Customer, Lon
     List<Customer> findByName(String name);
     List<Customer> findByNameOrSurname(String name, String surname);
 
+    @Query("select new com.cx.dto.CustomerDto(id,name,email,createdTime) from customer where id = (?1)")
+    CustomerDto findByCustomerId(@Param("id") Long id);
+
+    @Query("select new com.cx.dto.CustomerDto(id,name,email,createdTime) from customer where id IN (?1) and sex <> 3")
+    List<CustomerDto> findByTaskIds(@Param("ids") List<Long> ids);
+
+    @Query(value = "select id from customer where id IN (:ids) and sex != 3",nativeQuery = true)
+    List<Long> findByCustomerIds(@Param("ids") List<Long> ids);
 }

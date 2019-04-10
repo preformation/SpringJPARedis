@@ -6,18 +6,16 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.data.redis.core.index.Indexed;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import java.io.Serializable;
 
 /**
  * @Author: 舒建辉
  * @Description:
- * @Date: Created on 2018/2/1
+ * @Date: Created on 2019/3/9
  * @Version: 1.0
  */
 @Entity(name = "cx_user")

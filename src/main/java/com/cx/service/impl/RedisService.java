@@ -1460,4 +1460,24 @@ public class RedisService {
         });
         return result;
     }
+
+	/***
+	 * Obj 放进缓存里面
+	 * @param key
+	 * @param obj
+	 * @param <T>
+	 * @return
+	 */
+	public <T> boolean putObjCache(String key, T obj) {
+		final byte[] bkey = key.getBytes();
+		final byte[] bvalue = ProtoStuffUtil.serialize(obj);
+		boolean result = redisTemplate.execute(new RedisCallback<Boolean>() {
+			@Override
+			public Boolean doInRedis(RedisConnection connection) throws DataAccessException {
+				connection.set(bkey, bvalue);
+				return true;
+			}
+		});
+		return result;
+	}
 }

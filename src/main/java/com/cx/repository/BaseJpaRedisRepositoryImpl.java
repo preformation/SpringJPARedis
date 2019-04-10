@@ -224,7 +224,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	public List<T> findAll() {
 		String idskey = key("findAll", null, null);
 		List<String> entitykeys = entityKeys(idskey);
-		final List<T> finalEntities = Lists.newArrayListWithCapacity(20);
+		final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
 		try {
 		    if(!CollectionUtils.isEmpty(entitykeys)) {
 //            finalEntities = (List<T>)redisTemplate.opsForValue().multiGet(entitykeys);
@@ -246,7 +246,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 				return ts;
 			}
 
-			List<String> ids = Lists.newArrayListWithCapacity(20);
+			List<String> ids = Lists.newArrayListWithCapacity(10);
 			ts.stream().forEach(t ->
 				{
 					ids.add(t.getId()+"");
@@ -272,41 +272,45 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         String idskey = key("findAll", new String[]{"ids"}, new Object[]{ids});
         List<String> entitykeys = entityKeys(idskey);
         final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
-        List<String> idList = Lists.newArrayListWithCapacity(20);
-		ids.forEach(id -> {
-            idList.add(id+"");
-			T entity = getOnlyOne(key(id));
-			if(Objects.nonNull(entity)){
-                finalEntities.add(entity);
-			}
-		});
+        List<String> idList = Lists.newArrayListWithCapacity(10);
+        try {
+            ids.forEach(id -> {
+                idList.add(id+"");
+                T entity = getOnlyOne(key(id));
+                if(Objects.nonNull(entity)){
+                    finalEntities.add(entity);
+                }
+            });
 
-		if(!CollectionUtils.isEmpty(finalEntities)){
-			return finalEntities;
-		}
+            if(!CollectionUtils.isEmpty(finalEntities)){
+                return finalEntities;
+            }
 
-		final List<T> ts = super.findAll(ids);
+            final List<T> ts = super.findAll(ids);
 
-		if(CollectionUtils.isEmpty(ts)){
-			return ts;
-		}
+            if(CollectionUtils.isEmpty(ts)){
+                return ts;
+            }
 
-		ts.stream().forEach(t ->
-				{
-					BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
-					BeanHelper.registerConvertUtils();
-					Map<String, String> map = beanUtilsHashMapper.toHash(t);
-					map.entrySet().stream().forEach(item -> {
-						operations.put(item.getKey(), item.getValue());
-					});
-				}
-		);
+            ts.stream().forEach(t ->
+                    {
+                        BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
+                        BeanHelper.registerConvertUtils();
+                        Map<String, String> map = beanUtilsHashMapper.toHash(t);
+                        map.entrySet().stream().forEach(item -> {
+                            operations.put(item.getKey(), item.getValue());
+                        });
+                    }
+            );
 
-        redisService.delete(idskey);
-        redisService.putListCache(idskey, idList);
+            redisService.delete(idskey);
+            redisService.putListCache(idskey, idList);
 
-		return ts;
-	}
+            return ts;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 	public List<T> findAll(Sort sort) {
         return super.findAll(sort);

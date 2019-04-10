@@ -3,6 +3,7 @@ package com.cx.repository;
 import com.cx.entity.RedisEntity;
 import com.cx.service.impl.RedisService;
 import com.cx.utils.BeanHelper;
+import com.cx.utils.ListWrapper;
 import com.google.common.collect.Lists;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
@@ -17,6 +18,7 @@ import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.support.RepositoryProxyPostProcessor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
@@ -60,6 +62,7 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
 
             String methodName = invocation.getMethod().getName();
             int lenth = methodName.length();
+            //boolean isAnnotationPresent = invocation.getMethod().isAnnotationPresent(Query.class);
             if(methodName.startsWith("findBy")) {
                 String idskey = key("findBy", new String[]{methodName.substring(6, lenth)}, invocation.getArguments());
                 Type returnType = invocation.getMethod().getGenericReturnType();
@@ -74,15 +77,15 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
                                 return list;
                             }
                         }else{
-                            List<?> list = redisService.getListCache(idskey, (Class<? extends Object>) types[0]);
-                            if (!CollectionUtils.isEmpty(list)) {
-                                return list;
+                            ListWrapper listWrapper = redisService.getObjCache(idskey, ListWrapper.class);//(Class<?>) types[0]
+                            if (!ObjectUtils.isEmpty(listWrapper) && !CollectionUtils.isEmpty(listWrapper.getData())) {
+                                return listWrapper.getData();
                             }
                         }
                     }else {
-                        List<Object> list = redisService.getListCache(idskey, Object.class);
-                        if (!CollectionUtils.isEmpty(list)) {
-                            return list;
+                        ListWrapper lw = redisService.getObjCache(idskey, ListWrapper.class);
+                        if (!ObjectUtils.isEmpty(lw) && !CollectionUtils.isEmpty(lw.getData())) {
+                            return lw.getData();
                         }
                     }
                 } else {
@@ -92,9 +95,9 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
                             return list.get(0);
                         }
                     }else{
-                        List<?> list = redisService.getListCache(idskey, returnType.getClass());
-                        if (!CollectionUtils.isEmpty(list)) {
-                            return list.get(0);
+                        ListWrapper lws = redisService.getObjCache(idskey, ListWrapper.class);
+                        if (!ObjectUtils.isEmpty(lws) && !CollectionUtils.isEmpty(lws.getData())) {
+                            return lws.getData().get(0);
                         }
                     }
                 }
@@ -106,25 +109,29 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
                     if(ArrayUtils.isNotEmpty(types)){
                         if(types[0].getTypeName().equals(domainClass.getTypeName())){
                             List<T> list = (List<T>)obj;
-                            return CollectionUtils.isEmpty(list)?list:saveFindByToRedis(list, idskey);
+                            saveFindByToRedis(list, idskey);
+                            return CollectionUtils.isEmpty(list)?null:obj;
                         }else{
                             List<?> list = (List<?>)obj;
-                            return CollectionUtils.isEmpty(list)?Lists.newArrayListWithCapacity(0):redisService.putListCache(idskey, list);
+                            redisService.putObjCache(idskey, new ListWrapper(list));
+                            return CollectionUtils.isEmpty(list)?Lists.newArrayListWithCapacity(0):obj;
                         }
                     }else {
-                        List<Object> list = (List<Object>)obj;
-                        return CollectionUtils.isEmpty(list)?Lists.newArrayListWithCapacity(0):redisService.putListCache(idskey, list);
+                        List<?> list = (List<?>)obj;
+                        redisService.putObjCache(idskey, new ListWrapper(list));
+                        return CollectionUtils.isEmpty(list)?Lists.newArrayListWithCapacity(0):obj;
                     }
                 } else {
                     if(returnType.getTypeName().equals(domainClass.getTypeName())){
                         List<T> list = Lists.newArrayListWithCapacity(1);
                         list.add((T)obj);
-                        return CollectionUtils.isEmpty(list)?null:saveFindByToRedis(list, idskey).get(0);
+                        saveFindByToRedis(list, idskey);
+                        return obj;
                     }else{
                         List<Object> list = Lists.newArrayListWithCapacity(1);
                         list.add(obj);
-                        redisService.putListCache(idskey, list);
-                        return CollectionUtils.isEmpty(list)?null:obj;
+                        redisService.putObjCache(idskey, new ListWrapper(list));
+                        return obj;
                     }
                 }
             }
@@ -139,7 +146,7 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
          */
         public List<T> findByToRedis(String idskey) {
             List<String> entitykeys = entityKeys(idskey);
-            final List<T> finalEntities = Lists.newArrayListWithCapacity(20);
+            final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
 
             try {
                 if(null != entitykeys && !entitykeys.isEmpty()) {
@@ -168,7 +175,7 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
             }
 
             try {
-                List<String> ids = Lists.newArrayListWithCapacity(20);
+                List<String> ids = Lists.newArrayListWithCapacity(10);
                 entities.stream().forEach(t ->
                         {
                             ids.add(t.getId()+"");

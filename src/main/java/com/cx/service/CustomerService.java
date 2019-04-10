@@ -1,5 +1,6 @@
 package com.cx.service;
 
+import com.cx.dto.CustomerDto;
 import com.cx.entity.Customer;
 
 import java.util.List;
@@ -19,4 +20,9 @@ public interface CustomerService {
     List<Customer> findByName(String name);
     List<Customer> findByNameOrSurname(String name, String surname);
     Integer delete(Long id);
+
+    CustomerDto findByCustomerId(Long id);
+    List<CustomerDto> findByTaskIds(List<Long> ids);
+    List<Long> findByCustomerIds(List<Long> ids);
+    List<CustomerDto> findCustomerDtoByIds(List<Long> ids);
 }

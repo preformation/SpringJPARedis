@@ -1,10 +1,12 @@
 package com.cx.service.impl;
 
+import com.cx.dto.CustomerDto;
 import com.cx.entity.Customer;
 import com.cx.repository.CustomerRepository;
 import com.cx.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springside.modules.utils.mapper.BeanMapper;
 
 import java.util.List;
 
@@ -62,5 +64,26 @@ public class CustomerServiceImpl implements CustomerService {
     public Integer delete(Long id) {
         customerRepository.delete(id);
         return 1;
+    }
+
+    @Override
+    public CustomerDto findByCustomerId(Long id) {
+        return customerRepository.findByCustomerId(id);
+    }
+
+    @Override
+    public List<CustomerDto> findByTaskIds(List<Long> ids) {
+        return customerRepository.findByTaskIds(ids);
+    }
+
+    @Override
+    public List<Long> findByCustomerIds(List<Long> ids) {
+        return customerRepository.findByCustomerIds(ids);
+    }
+
+    @Override
+    public List<CustomerDto> findCustomerDtoByIds(List<Long> ids) {
+        List<Customer> entities = customerRepository.findAll(ids);
+        return BeanMapper.mapList(entities, Customer.class, CustomerDto.class);
     }
 }

@@ -1,14 +1,18 @@
 package com.cx.repository;
 
+import com.cx.entity.RedisEntity;
 import com.cx.service.impl.RedisService;
 import com.cx.utils.BeanHelper;
 import com.cx.utils.Const;
+import com.google.common.collect.Lists;
 import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.AbstractJPAQuery;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -22,14 +26,14 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.hash.BeanUtilsHashMapper;
 import org.springframework.data.repository.support.PageableExecutionUtils;
 import org.springframework.data.repository.support.PageableExecutionUtils.TotalSupplier;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * QueryDsl specific extension of {@link SimpleJpaRepository} which adds implementation for
@@ -41,7 +45,7 @@ import java.util.Set;
  * @author Jocelyn Ntakpe
  * @author Christoph Strobl
  */
-public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends QueryDslJpaRepository<T, ID> {
+public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Serializable> extends QueryDslJpaRepository<T, ID> {
 
 	private static final EntityPathResolver DEFAULT_ENTITY_PATH_RESOLVER = SimpleEntityPathResolver.INSTANCE;
 
@@ -85,7 +89,34 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
 	 */
 	@Override
 	public T findOne(Predicate predicate) {
-		return createQuery(predicate).select(path).fetchOne();
+        int conditionsHashcode = predicate.hashCode();
+        String idskey = key("findOne", new String[]{"predicate"}, new Object[]{conditionsHashcode});
+        String entitykey = entityKey(idskey);
+        try {
+            if(StringUtils.isNotBlank(entitykey)) {
+                T entity = getOnlyOne(entitykey);
+
+                if (!ObjectUtils.isEmpty(entity)) {
+                    return entity;
+                }
+            }
+
+            final T t = createQuery(predicate).select(path).fetchOne();;
+
+            BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
+            BeanHelper.registerConvertUtils();
+            Map<String, String> map = beanUtilsHashMapper.toHash(t);
+            map.entrySet().stream().forEach(item -> {
+                operations.put(item.getKey(), item.getValue());
+            });
+
+            redisService.delete(idskey);
+            redisService.putObjCache(idskey, t.getId());
+
+            return t;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	/*
@@ -94,7 +125,7 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
 	 */
 	@Override
 	public List<T> findAll(Predicate predicate) {
-		return createQuery(predicate).select(path).fetch();
+        return findAll(createQuery(predicate).select(path).fetch(), predicate, null, null);
 	}
 
 	/*
@@ -103,7 +134,7 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
 	 */
 	@Override
 	public List<T> findAll(Predicate predicate, OrderSpecifier<?>... orders) {
-		return executeSorted(createQuery(predicate).select(path), orders);
+        return findAll(executeSorted(createQuery(predicate).select(path), orders), predicate, null, orders);
 	}
 
 	/* 
@@ -112,7 +143,7 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
 	 */
 	@Override
 	public List<T> findAll(Predicate predicate, Sort sort) {
-		return executeSorted(createQuery(predicate).select(path), sort);
+        return findAll(executeSorted(createQuery(predicate).select(path), sort), predicate, sort, null);
 	}
 
 	/* 
@@ -121,7 +152,7 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
 	 */
 	@Override
 	public List<T> findAll(OrderSpecifier<?>... orders) {
-		return executeSorted(createQuery(new Predicate[0]).select(path), orders);
+        return findAll(executeSorted(createQuery(new Predicate[0]).select(path), orders), null, null, orders);
 	}
 
 	/*
@@ -168,21 +199,21 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
 	 * @return the Querydsl {@link JPQLQuery}.
 	 */
 	protected JPQLQuery<?> createQuery(Predicate... predicate) {
-		AbstractJPAQuery<?, ?> query = querydsl.createQuery(path).where(predicate);
-		CrudMethodMetadata metadata = getRepositoryMethodMetadata();
+        AbstractJPAQuery<?, ?> query = querydsl.createQuery(path).where(predicate);
+        CrudMethodMetadata metadata = getRepositoryMethodMetadata();
 
-		if (metadata == null) {
-			return query;
-		}
+        if (metadata == null) {
+            return query;
+        }
 
-		LockModeType type = metadata.getLockModeType();
-		query = type == null ? query : query.setLockMode(type);
+        LockModeType type = metadata.getLockModeType();
+        query = type == null ? query : query.setLockMode(type);
 
-		for (Entry<String, Object> hint : getQueryHints().entrySet()) {
-			query.setHint(hint.getKey(), hint.getValue());
-		}
+        for (Entry<String, Object> hint : getQueryHints().entrySet()) {
+            query.setHint(hint.getKey(), hint.getValue());
+        }
 
-		return query;
+        return query;
 	}
 
 	/**
@@ -192,19 +223,19 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
 	 * @return the Querydsl count {@link JPQLQuery}.
 	 */
 	protected JPQLQuery<?> createCountQuery(Predicate predicate) {
-		AbstractJPAQuery<?, ?> query = querydsl.createQuery(path).where(predicate);
+        AbstractJPAQuery<?, ?> query = querydsl.createQuery(path).where(predicate);
 
-		CrudMethodMetadata metadata = getRepositoryMethodMetadata();
+        CrudMethodMetadata metadata = getRepositoryMethodMetadata();
 
-		if (metadata == null) {
-			return query;
-		}
+        if (metadata == null) {
+            return query;
+        }
 
-		for (Entry<String, Object> hint : metadata.getQueryHints().entrySet()) {
-			query.setHint(hint.getKey(), hint.getValue());
-		}
+        for (Entry<String, Object> hint : metadata.getQueryHints().entrySet()) {
+            query.setHint(hint.getKey(), hint.getValue());
+        }
 
-		return query;
+        return query;
 	}
 
 	/**
@@ -237,9 +268,52 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
         return keyspace() + ":ids:" + id;
     }
 
-    private Set<String> entityKeys() {
-        return redisTemplate.keys(keyspace() + ":ids:*");
+    /**
+     * findAll缓存key
+     * @param methodname
+     * @param paramnames 第一个，第二个，...依次排列
+     * @param paramvals 第一个，第二个，...依次排列，和paramnames的顺序一致
+     * @return
+     */
+    public String key(String methodname, String[] paramnames, Object[] paramvals){
+        StringBuffer sb = new StringBuffer(keyspace());
+        sb.append(":finds").append(StringUtils.isBlank(methodname)? "" : ":"+methodname);
+        if(ArrayUtils.isNotEmpty(paramnames) && ArrayUtils.isNotEmpty(paramvals)) {
+            Arrays.stream(paramnames).forEach(fieldname -> {
+                sb.append(":"+fieldname);
+            });
+
+            Arrays.stream(paramvals).forEach(paramval -> {
+                if(paramval instanceof List){
+                    Collections.sort((List)paramval);
+                }
+                if(paramval instanceof Object[]) {
+                    Arrays.sort((Object[])paramval);
+                }
+                sb.append(":"+paramval.hashCode());
+            });
+        }
+
+        return sb.toString();
     }
+
+    private String entityKey(String key){
+        Boolean hasKey = redisTemplate.hasKey(key);
+        if(!hasKey){
+            return null;
+        }
+
+        return redisService.getObjCache(key, String.class);
+    }
+
+	private List<String> entityKeys(String key){
+		Boolean hasKey = redisTemplate.hasKey(key);
+		if(!hasKey){
+			return null;
+		}
+
+		return redisService.getListCache(key, String.class);
+	}
 
     private T getOnlyOne(String key){
         Boolean hasKey = redisTemplate.hasKey(key);
@@ -250,5 +324,79 @@ public class BaseQueryDslJpaRepository<T, ID extends Serializable> extends Query
         Map<String, String> entries = operations.entries();
         BeanHelper.registerConvertUtils();
         return beanUtilsHashMapper.fromHash(entries);
+    }
+
+
+    private List<T> findAll(List<T> result, Predicate predicate, Sort sort, OrderSpecifier<?>... orders) {
+        String[] paramnames = new String[]{};
+        Object[] paramvals = new Object[]{};
+        if(com.cx.utils.ObjectUtils.anyNotNull(predicate, sort, orders)){
+            if(!ObjectUtils.isEmpty(predicate)){
+                paramnames[0] = "predicate";
+                paramvals[0] = predicate.hashCode();
+            }else{
+                paramnames[0] = "";
+                paramvals[0] = 0;
+            }
+            if(!ObjectUtils.isEmpty(sort)){
+                paramnames[1] = "sort";
+                paramvals[1] = sort.hashCode();
+            }else{
+                paramnames[1] = "";
+                paramvals[1] = 0;
+            }
+            if(!ObjectUtils.isEmpty(orders)){
+                paramnames[2] = "orders";
+                paramvals[2] = orders.hashCode();
+            }else{
+                paramnames[2] = "";
+                paramvals[2] = 0;
+            }
+        }
+
+        String idskey = key("findAll", paramnames, paramvals);
+        List<String> entitykeys = entityKeys(idskey);
+        final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
+        try {
+            if(!CollectionUtils.isEmpty(entitykeys)) {
+//            finalEntities = (List<T>)redisTemplate.opsForValue().multiGet(entitykeys);
+                entitykeys.stream().forEach(key -> {
+                    T entity = getOnlyOne(key);
+                    if (Objects.nonNull(entity)) {
+                        finalEntities.add(entity);
+                    }
+                });
+
+                if (!CollectionUtils.isEmpty(finalEntities)) {
+                    return finalEntities;
+                }
+            }
+
+            final List<T> ts = result;
+
+            if(CollectionUtils.isEmpty(ts)){
+                return ts;
+            }
+
+            List<String> ids = Lists.newArrayListWithCapacity(10);
+            ts.stream().forEach(t ->
+                    {
+                        ids.add(t.getId()+"");
+                        BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
+                        BeanHelper.registerConvertUtils();
+                        Map<String, String> map = beanUtilsHashMapper.toHash(t);
+                        map.entrySet().stream().forEach(item -> {
+                            operations.put(item.getKey(), item.getValue());
+                        });
+                    }
+            );
+
+            redisService.delete(idskey);
+            redisService.putListCache(idskey, ids);
+
+            return ts;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

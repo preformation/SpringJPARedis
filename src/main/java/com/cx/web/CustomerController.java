@@ -1,9 +1,9 @@
 package com.cx.web;
 
+import com.cx.dto.CustomerDto;
 import com.cx.entity.Customer;
 import com.cx.service.CustomerService;
 import com.cx.service.impl.RedisService;
-import com.cx.utils.Const;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
@@ -23,7 +23,7 @@ import java.util.Random;
  */
 @RestController
 @RequestMapping("/customer")
-public class CustomerController extends BaseController<CustomerController>{
+public class CustomerController extends BaseController<CustomerController> {
 
     @Autowired
     private CustomerService customerService;
@@ -54,15 +54,14 @@ public class CustomerController extends BaseController<CustomerController>{
 
     @RequestMapping("/findAll")
     public List<Customer> findAll() {
-        String apikey = apikey("findAll", null, null);
-        List<Customer> customers = redisService.getListCache(apikey, Customer.class);
-        if(!CollectionUtils.isEmpty(customers)) {
-            return customers;
-        }
+//        String apikey = apikey("findAll", null, null);
+//        List<Customer> customers = redisService.getListCache(apikey, Customer.class);
+//        if(!CollectionUtils.isEmpty(customers)) {
+//            return customers;
+//        }
 
-        customers = customerService.findAll();
-
-        redisService.putListCacheWithExpireTime(apikey, customers, Const.REDIS_1ST_TTL);
+        List<Customer> customers = customerService.findAll();
+//        redisService.putListCacheWithExpireTime(apikey, customers, Const.REDIS_1ST_TTL);
         return CollectionUtils.isEmpty(customers)?Lists.newArrayListWithCapacity(0):customers;
     }
 
@@ -74,27 +73,27 @@ public class CustomerController extends BaseController<CustomerController>{
 
     @RequestMapping("/findBySex/{sex}")
     public List<Customer> findBySex(@PathVariable Integer sex) {
-        String apikey = apikey("findBySex", new String[]{"sex"}, new Object[]{sex});
-        List<Customer> customers = redisService.getListCache(apikey, Customer.class);
-        if(!CollectionUtils.isEmpty(customers)) {
-            return customers;
-        }
+//        String apikey = apikey("findBySex", new String[]{"sex"}, new Object[]{sex});
+//        List<Customer> customers = redisService.getListCache(apikey, Customer.class);
+//        if(!CollectionUtils.isEmpty(customers)) {
+//            return customers;
+//        }
 
-        customers = customerService.findBySex(sex);
-        redisService.putListCacheWithExpireTime(apikey, customers, Const.REDIS_1ST_TTL);
+        List<Customer> customers = customerService.findBySex(sex);
+//        redisService.putListCacheWithExpireTime(apikey, customers, Const.REDIS_1ST_TTL);
         return CollectionUtils.isEmpty(customers)?Lists.newArrayListWithCapacity(0):customers;
     }
 
     @RequestMapping("/findByName/{name}")
     public List<Customer> findByName(@PathVariable String name) {
-        String apikey = apikey("findByName", new String[]{"name"}, new Object[]{name});
-        List<Customer> customers = redisService.getListCache(apikey, Customer.class);
-        if(!CollectionUtils.isEmpty(customers)) {
-            return customers;
-        }
+//        String apikey = apikey("findByName", new String[]{"name"}, new Object[]{name});
+//        List<Customer> customers = redisService.getListCache(apikey, Customer.class);
+//        if(!CollectionUtils.isEmpty(customers)) {
+//            return customers;
+//        }
 
-        customers = customerService.findByName(name);
-        redisService.putListCacheWithExpireTime(apikey, customers, Const.REDIS_1ST_TTL);
+        List<Customer> customers = customerService.findByName(name);
+//        redisService.putListCacheWithExpireTime(apikey, customers, Const.REDIS_1ST_TTL);
         return CollectionUtils.isEmpty(customers)?Lists.newArrayListWithCapacity(0):customers;
     }
 
@@ -116,4 +115,39 @@ public class CustomerController extends BaseController<CustomerController>{
         customerService.delete(id);
         return 1;
     }
+
+    @RequestMapping("/findByTaskId")
+    public List<CustomerDto> findByTaskId() {
+        List<Long> ids = Lists.newArrayListWithCapacity(4);
+        ids.add(85l);
+        ids.add(86l);
+        ids.add(87l);
+        ids.add(88l);
+        return customerService.findByTaskId(ids);
+    }
+
+    @RequestMapping("/findByCustomerId")
+    public List<Long> findByCustomerId() {
+        List<Long> ids = Lists.newArrayListWithCapacity(4);
+        ids.add(85l);
+        ids.add(86l);
+        ids.add(87l);
+        ids.add(88l);
+        return customerService.findByCustomerId(ids);
+    }
+
+    /**
+     * 查找
+     * @return
+     */
+    @RequestMapping("/findCustomerDtoByIds")
+    public List<CustomerDto> findCustomerDtoByIds() {
+        List<Long> ids = Lists.newArrayListWithCapacity(4);
+        ids.add(85l);
+        ids.add(86l);
+        ids.add(87l);
+        ids.add(88l);
+        return customerService.findCustomerDtoByIds(ids);
+    }
+
 }

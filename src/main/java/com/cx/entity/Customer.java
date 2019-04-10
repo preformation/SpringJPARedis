@@ -1,15 +1,11 @@
 package com.cx.entity;
 
-import com.cx.entity.generator.IdGenerate;
-import com.cx.utils.Const;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.data.redis.core.RedisHash;
-import org.springframework.data.redis.core.index.Indexed;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -20,7 +16,7 @@ import java.util.Date;
 /**
  * @Author: 舒建辉
  * @Description:
- * @Date: Created on 2018/2/1
+ * @Date: Created on 2019/3/9
  * @Version: 1.0
  */
 @Entity(name = "customer")
@@ -29,7 +25,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(exclude = { "children" })
-public class Customer implements RedisEntity<Long>{
+public class Customer implements RedisEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
