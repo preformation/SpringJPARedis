@@ -367,7 +367,7 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
                     }
                 });
 
-                if (!CollectionUtils.isEmpty(finalEntities)) {
+                if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
                     return finalEntities;
                 }
             }

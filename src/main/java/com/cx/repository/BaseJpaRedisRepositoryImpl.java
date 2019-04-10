@@ -235,7 +235,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
                     }
                 });
 
-                if (!CollectionUtils.isEmpty(finalEntities)) {
+                if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
                     return finalEntities;
                 }
             }
@@ -282,7 +282,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
                 }
             });
 
-            if(!CollectionUtils.isEmpty(finalEntities)){
+            if(!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)){
                 return finalEntities;
             }
 

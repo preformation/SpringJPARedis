@@ -149,7 +149,7 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
             final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
 
             try {
-                if(null != entitykeys && !entitykeys.isEmpty()) {
+                if(!CollectionUtils.isEmpty(entitykeys)) {
 //                finalEntities = (List<T>) redisTemplate.opsForValue().multiGet(entitykeys);
                     entitykeys.stream().forEach(key -> {
                         T entity = getOnlyOne(keyspace() + ":ids:" + key);
