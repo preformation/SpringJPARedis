@@ -4,13 +4,12 @@ import com.cx.entity.RedisEntity;
 import com.cx.service.impl.RedisService;
 import com.cx.utils.BeanHelper;
 import com.cx.utils.Const;
+import com.cx.utils.ObjWrapper;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.data.redis.core.BoundHashOperations;
@@ -19,6 +18,7 @@ import org.springframework.data.redis.hash.BeanUtilsHashMapper;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import javax.persistence.EntityManager;
 import java.io.Serializable;
@@ -64,7 +64,11 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 		try {
 			super.delete(id);
 
-			redisTemplate.delete(key(id));
+            String key = key(id);
+            Boolean flag = redisTemplate.hasKey(key);
+            if(BooleanUtils.isTrue(flag)) {
+                redisTemplate.delete(key);
+            }
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -77,7 +81,11 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 		try {
 			super.delete(entity);
 
-			redisTemplate.delete(key(entity.getId()));
+            String key = key(entity.getId());
+            Boolean flag = redisTemplate.hasKey(key);
+            if(BooleanUtils.isTrue(flag)) {
+                redisTemplate.delete(key);
+            }
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -101,6 +109,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 			if(keys.size() == 0){
 				return;
 			}
+
 			redisTemplate.delete(keys);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -213,9 +222,9 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	public boolean exists(ID id) {
 		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
 
-		try {
-			boolean exists = redisTemplate.hasKey(key(id));
-			return exists ? exists : super.exists(id);
+        try {
+			Boolean exists = redisTemplate.hasKey(key(id));
+			return (exists != null && exists) ? exists : super.exists(id);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -313,77 +322,184 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
     }
 
 	public List<T> findAll(Sort sort) {
-        return super.findAll(sort);
+        return findAll(super.findAll(sort), sort, null);
 	}
 
 	public Page<T> findAll(Pageable pageable) {
-		return super.findAll(pageable);
+        return findAll(super.findAll(pageable), pageable, null);
 	}
 
 	public T findOne(Specification<T> spec) {
-        return super.findOne(spec);
+        int conditionsHashcode = spec.hashCode();
+        String idskey = key("findOne", new String[]{"spec"}, new Object[]{conditionsHashcode});
+        String entitykey = entityKey(idskey);
+        try {
+            if(StringUtils.isNotBlank(entitykey)) {
+                T entity = getOnlyOne(entitykey);
+
+                if (!ObjectUtils.isEmpty(entity)) {
+                    return entity;
+                }
+            }
+
+            final T t = super.findOne(spec);
+
+            BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
+            BeanHelper.registerConvertUtils();
+            Map<String, String> map = beanUtilsHashMapper.toHash(t);
+            map.entrySet().stream().forEach(item -> {
+                operations.put(item.getKey(), item.getValue());
+            });
+
+            redisService.delete(idskey);
+            redisService.putObjCache(idskey, t.getId());
+
+            return t;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	public List<T> findAll(Specification<T> spec) {
-		return super.findAll(spec);
+        return findAll(super.findAll(spec), null, spec);
 	}
 
 	public Page<T> findAll(Specification<T> spec, Pageable pageable) {
-		return super.findAll(spec, pageable);
+        return findAll(super.findAll(spec, pageable), pageable, spec);
 	}
 
 	public List<T> findAll(Specification<T> spec, Sort sort) {
-		return super.findAll(spec, sort);
+        return findAll(super.findAll(spec, sort), sort, spec);
 	}
 
 	@Override
 	public <S extends T> S findOne(Example<S> example) {
-		return super.findOne(example);
+        int conditionsHashcode = example.hashCode();
+        String idskey = key("findOne", new String[]{"spec"}, new Object[]{conditionsHashcode});
+        String entitykey = entityKey(idskey);
+        try {
+            if(StringUtils.isNotBlank(entitykey)) {
+                S entity = (S)getOnlyOne(entitykey);//父类就是子类，故强转
+
+                if (!ObjectUtils.isEmpty(entity)) {
+                    return entity;
+                }
+            }
+
+            final S s = super.findOne(example);
+
+            BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(s.getId()));
+            BeanHelper.registerConvertUtils();
+            Map<String, String> map = beanUtilsHashMapper.toHash(s);
+            map.entrySet().stream().forEach(item -> {
+                operations.put(item.getKey(), item.getValue());
+            });
+
+            redisService.delete(idskey);
+            redisService.putObjCache(idskey, s.getId());
+
+            return s;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	@Override
 	public <S extends T> long count(Example<S> example) {
-		return super.count(example);
+        int conditionsHashcode = example.hashCode();
+        String idskey = key("count", new String[]{"count"}, new Object[]{conditionsHashcode});
+        ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
+        try {
+            if(ObjectUtils.isEmpty(objWrapper)) {
+                return objWrapper.getData();
+            }
+
+            final long l = super.count(example);
+
+            redisService.delete(idskey);
+            redisService.putObjCache(idskey, new ObjWrapper<Long>(l));
+
+            return l;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	@Override
 	public <S extends T> boolean exists(Example<S> example) {
-		return super.exists(example);
+        int conditionsHashcode = example.hashCode();
+        String idskey = key("exists", new String[]{"exists"}, new Object[]{conditionsHashcode});
+        ObjWrapper<Boolean> objWrapper = (ObjWrapper<Boolean>)countKey(idskey);
+        try {
+            if(ObjectUtils.isEmpty(objWrapper)) {
+                return objWrapper.getData();
+            }
+
+            final boolean l = super.exists(example);
+
+            redisService.delete(idskey);
+            redisService.putObjCache(idskey, new ObjWrapper<Boolean>(l));
+
+            return l;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	@Override
 	public <S extends T> List<S> findAll(Example<S> example) {
-		return super.findAll(example);
+        return findAll(super.findAll(example), example, null);
 	}
 
 	@Override
 	public <S extends T> List<S> findAll(Example<S> example, Sort sort) {
-		return super.findAll(example, sort);
+        return findAll(super.findAll(example, sort), example, sort);
 	}
 
 	@Override
 	public <S extends T> Page<S> findAll(Example<S> example, Pageable pageable) {
-        return super.findAll(example, pageable);
+        return findAll(super.findAll(example, pageable), example, pageable);
 	}
 
 	public long count() {
-		int size = entityKeys().size();
-		return size == 0 ? super.count() : size;
+        int size = -1;
+        int eks = entityKeys().size();
+        if(eks > -1){
+            size = eks;
+        }
+		return size == -1 ? super.count() : size;
 	}
 
 	public long count(Specification<T> spec) {
-		return super.count(spec);
+        int conditionsHashcode = spec.hashCode();
+        String idskey = key("count", new String[]{"count"}, new Object[]{conditionsHashcode});
+        ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
+        try {
+            if(ObjectUtils.isEmpty(objWrapper)) {
+                return objWrapper.getData();
+            }
+
+            final long l = super.count(spec);
+
+            redisService.delete(idskey);
+            redisService.putObjCache(idskey, new ObjWrapper<Long>(l));
+
+            return l;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	@Transactional
 	public <S extends T> S save(S entity) {
-
 		try{
-            super.save(entity);
+            String key = key(entity.getId());
+            Boolean flag = redisTemplate.hasKey(key);
+            if(BooleanUtils.isTrue(flag)) {
+                redisTemplate.delete(key);
+            }
 
-			if(null == entity.getId()){
-                super.delete(entity);
-			}
+            super.save(entity);
 
 			BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(entity.getId()));
 			BeanHelper.registerConvertUtils();
@@ -401,12 +517,57 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 
 	@Transactional
 	public <S extends T> S saveAndFlush(S entity) {
-        return super.saveAndFlush(entity);
+        try{
+            String key = key(entity.getId());
+            Boolean flag = redisTemplate.hasKey(key);
+            if(BooleanUtils.isTrue(flag)) {
+                redisTemplate.delete(key);
+            }
+
+            super.saveAndFlush(entity);
+
+            BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(entity.getId()));
+            BeanHelper.registerConvertUtils();
+            Map<String, String> map = beanUtilsHashMapper.toHash(entity);
+            map.entrySet().stream().forEach(item -> {
+                operations.put(item.getKey(), item.getValue());
+            });
+
+            redisTemplate.delete(redisTemplate.keys(keyspace() + ":finds:*"));
+            return entity;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	@Transactional
 	public <S extends T> List<S> save(Iterable<S> entities) {
-		return super.save(entities);
+        try{
+            entities.forEach(entity -> {
+                String key = key(entity.getId());
+                Boolean flag = redisTemplate.hasKey(key);
+                if(BooleanUtils.isTrue(flag)) {
+                    redisTemplate.delete(key);
+                }
+            });
+
+            super.save(entities);
+
+            entities.forEach(entity -> {
+                BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(entity.getId()));
+                BeanHelper.registerConvertUtils();
+                Map<String, String> map = beanUtilsHashMapper.toHash(entity);
+                map.entrySet().stream().forEach(item -> {
+                    operations.put(item.getKey(), item.getValue());
+                });
+            });
+
+            redisTemplate.delete(redisTemplate.keys(keyspace() + ":finds:*"));
+
+            return (List<S>)entities;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	@Transactional
@@ -460,6 +621,24 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 		return redisTemplate.keys(keyspace() + ":ids:*");
 	}
 
+    private ObjWrapper countKey(String key){
+        Boolean hasKey = redisTemplate.hasKey(key);
+        if(!hasKey){
+            return null;
+        }
+
+        return redisService.getObjCache(key, ObjWrapper.class);
+    }
+
+    private String entityKey(String key){
+        Boolean hasKey = redisTemplate.hasKey(key);
+        if(!hasKey){
+            return null;
+        }
+
+        return redisService.getObjCache(key, String.class);
+    }
+
 	private List<String> entityKeys(String key){
 		Boolean hasKey = redisTemplate.hasKey(key);
 		if(!hasKey){
@@ -478,5 +657,235 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         Map<String, String> entries = operations.entries();
 		BeanHelper.registerConvertUtils();
         return beanUtilsHashMapper.fromHash(entries);
+    }
+
+	private List<T> findAll(List<T> result, Sort sort, Specification<T> spec) {
+		String[] paramnames = new String[]{};
+		Object[] paramvals = new Object[]{};
+		if(com.cx.utils.ObjectUtils.anyNotNull(spec, sort)){
+			if(!ObjectUtils.isEmpty(spec)){
+				paramnames[0] = "spec";
+				paramvals[0] = spec.hashCode();
+			}
+			if(!ObjectUtils.isEmpty(sort)){
+				paramnames[1] = "sort";
+				paramvals[1] = sort.hashCode();
+			}
+		}
+
+		String idskey = key("findAll", paramnames, paramvals);
+		List<String> entitykeys = entityKeys(idskey);
+		final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
+		try {
+			if(!CollectionUtils.isEmpty(entitykeys)) {
+//            finalEntities = (List<T>)redisTemplate.opsForValue().multiGet(entitykeys);
+				entitykeys.stream().forEach(key -> {
+					T entity = getOnlyOne(key);
+					if (Objects.nonNull(entity)) {
+						finalEntities.add(entity);
+					}
+				});
+
+				if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
+					return finalEntities;
+				}
+			}
+
+			if(CollectionUtils.isEmpty(result)){
+				return result;
+			}
+
+			List<String> ids = Lists.newArrayListWithCapacity(10);
+            result.stream().forEach(t ->
+					{
+						ids.add(t.getId()+"");
+						BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
+						BeanHelper.registerConvertUtils();
+						Map<String, String> map = beanUtilsHashMapper.toHash(t);
+						map.entrySet().stream().forEach(item -> {
+							operations.put(item.getKey(), item.getValue());
+						});
+					}
+			);
+
+			redisService.delete(idskey);
+			redisService.putListCache(idskey, ids);
+
+			return result;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+    private <S extends T> List<S> findAll(List<S> result, Example<S> example, Sort sort) {
+        String[] paramnames = new String[]{};
+        Object[] paramvals = new Object[]{};
+        if(com.cx.utils.ObjectUtils.anyNotNull(example, sort)){
+            if(!ObjectUtils.isEmpty(example)){
+                paramnames[0] = "example";
+                paramvals[0] = example.hashCode();
+            }
+            if(!ObjectUtils.isEmpty(sort)){
+                paramnames[1] = "sort";
+                paramvals[1] = sort.hashCode();
+            }
+        }
+
+        String idskey = key("findAll", paramnames, paramvals);
+        List<String> entitykeys = entityKeys(idskey);
+        final List<S> finalEntities = Lists.newArrayListWithCapacity(10);
+        try {
+            if(!CollectionUtils.isEmpty(entitykeys)) {
+//            finalEntities = (List<S>)redisTemplate.opsForValue().multiGet(entitykeys);
+                entitykeys.stream().forEach(key -> {
+                    S entity = (S)getOnlyOne(key);//父类就是子类，故强转
+                    if (Objects.nonNull(entity)) {
+                        finalEntities.add(entity);
+                    }
+                });
+
+                if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
+                    return finalEntities;
+                }
+            }
+
+            if(CollectionUtils.isEmpty(result)){
+                return result;
+            }
+
+            List<String> ids = Lists.newArrayListWithCapacity(10);
+            result.stream().forEach(t ->
+                    {
+                        ids.add(t.getId()+"");
+                        BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
+                        BeanHelper.registerConvertUtils();
+                        Map<String, String> map = beanUtilsHashMapper.toHash(t);
+                        map.entrySet().stream().forEach(item -> {
+                            operations.put(item.getKey(), item.getValue());
+                        });
+                    }
+            );
+
+            redisService.delete(idskey);
+            redisService.putListCache(idskey, ids);
+
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Page<T> findAll(Page<T> result, Pageable pageable, Specification<T> spec) {
+        String[] paramnames = new String[]{};
+        Object[] paramvals = new Object[]{};
+        if(com.cx.utils.ObjectUtils.anyNotNull(spec, pageable)){
+            if(!ObjectUtils.isEmpty(spec)){
+                paramnames[0] = "spec";
+                paramvals[0] = spec.hashCode();
+            }
+            if(!ObjectUtils.isEmpty(pageable)){
+                paramnames[1] = "pageable";
+                paramvals[1] = pageable.hashCode();
+            }
+        }
+
+        String idskey = key("findAll", paramnames, paramvals);
+        List<String> entitykeys = entityKeys(idskey);
+        final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
+        try {
+            if(!CollectionUtils.isEmpty(entitykeys)) {
+                entitykeys.stream().forEach(key -> {
+                    T entity = getOnlyOne(key);
+                    if (Objects.nonNull(entity)) {
+                        finalEntities.add(entity);
+                    }
+                });
+
+                if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
+                    return new PageImpl(finalEntities);
+                }
+            }
+
+            if(CollectionUtils.isEmpty(result.getContent())){
+                return result;
+            }
+
+            List<String> ids = Lists.newArrayListWithCapacity(10);
+            result.getContent().stream().forEach(t ->
+                    {
+                        ids.add(t.getId()+"");
+                        BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
+                        BeanHelper.registerConvertUtils();
+                        Map<String, String> map = beanUtilsHashMapper.toHash(t);
+                        map.entrySet().stream().forEach(item -> {
+                            operations.put(item.getKey(), item.getValue());
+                        });
+                    }
+            );
+
+            redisService.delete(idskey);
+            redisService.putListCache(idskey, ids);
+
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private <S extends T> Page<S> findAll(Page<S> result, Example<S> example, Pageable pageable) {
+        String[] paramnames = new String[]{};
+        Object[] paramvals = new Object[]{};
+        if(com.cx.utils.ObjectUtils.anyNotNull(example, pageable)){
+            if(!ObjectUtils.isEmpty(example)){
+                paramnames[0] = "example";
+                paramvals[0] = example.hashCode();
+            }
+            if(!ObjectUtils.isEmpty(pageable)){
+                paramnames[1] = "pageable";
+                paramvals[1] = pageable.hashCode();
+            }
+        }
+
+        String idskey = key("findAll", paramnames, paramvals);
+        List<String> entitykeys = entityKeys(idskey);
+        final List<S> finalEntities = Lists.newArrayListWithCapacity(10);
+        try {
+            if(!CollectionUtils.isEmpty(entitykeys)) {
+                entitykeys.stream().forEach(key -> {
+                    S entity = (S)getOnlyOne(key);//父类就是子类，故强转
+                    if (Objects.nonNull(entity)) {
+                        finalEntities.add(entity);
+                    }
+                });
+
+                if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
+                    return new PageImpl(finalEntities);
+                }
+            }
+
+            if(CollectionUtils.isEmpty(result.getContent())){
+                return result;
+            }
+
+            List<String> ids = Lists.newArrayListWithCapacity(10);
+            result.getContent().stream().forEach(t ->
+                    {
+                        ids.add(t.getId()+"");
+                        BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
+                        BeanHelper.registerConvertUtils();
+                        Map<String, String> map = beanUtilsHashMapper.toHash(t);
+                        map.entrySet().stream().forEach(item -> {
+                            operations.put(item.getKey(), item.getValue());
+                        });
+                    }
+            );
+
+            redisService.delete(idskey);
+            redisService.putListCache(idskey, ids);
+
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

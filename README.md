@@ -63,8 +63,8 @@ SpringBoot 开源企业级JPA REDIS无缝整合精细化缓存
 *   缓存时间默认4天，不能动态进行数据变化的缓存变更
 
 二层缓存实现（RedisTemplate<String, ?>）
-*   JPA 通用增删改查无缝缓存整合（BaseJpaRedisRepositoryImpl）（基本实现）
-*   JPA 复杂SQL支持无缝缓存整合（BaseQueryDslJpaRepository）（基本实现）
+*   JPA 通用增删改查无缝缓存整合（BaseJpaRedisRepositoryImpl）（完全实现）
+*   JPA 复杂SQL支持无缝缓存整合（BaseQueryDslJpaRepository）（完全实现）
 *   JPA FindBy模式支持无缝缓存整合（SecurecyPostProcessor）（完全实现）
 *   支持ProtoStuffRedisSerializer最快方式
 *   支持KryoRedisSerializer方式
