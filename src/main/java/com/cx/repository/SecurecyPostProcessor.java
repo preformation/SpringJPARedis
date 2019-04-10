@@ -170,8 +170,8 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
          * @return
          */
         public List<T> saveFindByToRedis(List<T> entities, String idskey) {
-            if (StringUtils.isAnyBlank(idskey) || CollectionUtils.isEmpty(entities)) {
-                throw new RuntimeException("保存findBys方法部分传参不能为空");
+            if (StringUtils.isBlank(idskey) || CollectionUtils.isEmpty(entities)) {
+                return entities;
             }
 
             try {
