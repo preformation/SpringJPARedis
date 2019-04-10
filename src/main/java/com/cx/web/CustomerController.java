@@ -116,24 +116,29 @@ public class CustomerController extends BaseController<CustomerController> {
         return 1;
     }
 
-    @RequestMapping("/findByTaskId")
-    public List<CustomerDto> findByTaskId() {
-        List<Long> ids = Lists.newArrayListWithCapacity(4);
-        ids.add(85l);
-        ids.add(86l);
-        ids.add(87l);
-        ids.add(88l);
-        return customerService.findByTaskId(ids);
+    @RequestMapping("/findByCustomerId")
+    public CustomerDto findByCustomerId() {
+        return customerService.findByCustomerId(85l);
     }
 
-    @RequestMapping("/findByCustomerId")
-    public List<Long> findByCustomerId() {
+    @RequestMapping("/findByTaskIds")
+    public List<CustomerDto> findByTaskIds() {
         List<Long> ids = Lists.newArrayListWithCapacity(4);
         ids.add(85l);
         ids.add(86l);
         ids.add(87l);
         ids.add(88l);
-        return customerService.findByCustomerId(ids);
+        return customerService.findByTaskIds(ids);
+    }
+
+    @RequestMapping("/findByCustomerIds")
+    public List<Long> findByCustomerIds() {
+        List<Long> ids = Lists.newArrayListWithCapacity(4);
+        ids.add(85l);
+        ids.add(86l);
+        ids.add(87l);
+        ids.add(88l);
+        return customerService.findByCustomerIds(ids);
     }
 
     /**
