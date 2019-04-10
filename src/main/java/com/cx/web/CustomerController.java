@@ -118,26 +118,26 @@ public class CustomerController extends BaseController<CustomerController> {
 
     @RequestMapping("/findByCustomerId")
     public CustomerDto findByCustomerId() {
-        return customerService.findByCustomerId(85l);
+        return customerService.findByCustomerId(260l);
     }
 
     @RequestMapping("/findByTaskIds")
     public List<CustomerDto> findByTaskIds() {
         List<Long> ids = Lists.newArrayListWithCapacity(4);
-        ids.add(85l);
-        ids.add(86l);
-        ids.add(87l);
-        ids.add(88l);
+        ids.add(259l);
+        ids.add(260l);
+        ids.add(261l);
+        ids.add(262l);
         return customerService.findByTaskIds(ids);
     }
 
     @RequestMapping("/findByCustomerIds")
     public List<Long> findByCustomerIds() {
         List<Long> ids = Lists.newArrayListWithCapacity(4);
-        ids.add(85l);
-        ids.add(86l);
-        ids.add(87l);
-        ids.add(88l);
+        ids.add(259l);
+        ids.add(260l);
+        ids.add(261l);
+        ids.add(262l);
         return customerService.findByCustomerIds(ids);
     }
 
@@ -148,10 +148,10 @@ public class CustomerController extends BaseController<CustomerController> {
     @RequestMapping("/findCustomerDtoByIds")
     public List<CustomerDto> findCustomerDtoByIds() {
         List<Long> ids = Lists.newArrayListWithCapacity(4);
-        ids.add(85l);
-        ids.add(86l);
-        ids.add(87l);
-        ids.add(88l);
+        ids.add(259l);
+        ids.add(260l);
+        ids.add(261l);
+        ids.add(262l);
         return customerService.findCustomerDtoByIds(ids);
     }
 

@@ -1,6 +1,7 @@
 package com.cx.service.impl;
 
 import com.cx.utils.ProtoStuffUtil;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.DataType;
@@ -1375,9 +1376,9 @@ public class RedisService {
                 return connection.get(key.getBytes());
             }
         });
-        if (result == null) {
-            return null;
-        }
+		if (ArrayUtils.isEmpty(result)) {
+			return null;
+		}
         return ProtoStuffUtil.deserializeList(result, targetClass);
     }
 
@@ -1444,7 +1445,7 @@ public class RedisService {
                 return connection.get(key.getBytes());
             }
         });
-        if (result == null) {
+        if (ArrayUtils.isEmpty(result)) {
             return null;
         }
         return ProtoStuffUtil.deserialize(result, targetClass);
