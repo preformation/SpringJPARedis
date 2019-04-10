@@ -181,6 +181,10 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 
 			t = super.findOne(id);
 
+            if(null == t) {
+                return t;
+            }
+
 			BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
 			BeanHelper.registerConvertUtils();
 			Map<String, String> map = beanUtilsHashMapper.toHash(t);
@@ -205,6 +209,10 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 			}
 
 			t = super.getOne(id);
+
+            if(null == t) {
+                return t;
+            }
 
 			BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
 			BeanHelper.registerConvertUtils();
@@ -344,6 +352,10 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 
             final T t = super.findOne(spec);
 
+            if(null == t) {
+                return t;
+            }
+
             BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
             BeanHelper.registerConvertUtils();
             Map<String, String> map = beanUtilsHashMapper.toHash(t);
@@ -387,6 +399,10 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
             }
 
             final S s = super.findOne(example);
+
+            if(null == s) {
+                return s;
+            }
 
             BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(s.getId()));
             BeanHelper.registerConvertUtils();

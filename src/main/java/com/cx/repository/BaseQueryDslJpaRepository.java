@@ -105,6 +105,10 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 
             final T t = createQuery(predicate).select(path).fetchOne();
 
+            if(null == t) {
+                return t;
+            }
+
             BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
             BeanHelper.registerConvertUtils();
             Map<String, String> map = beanUtilsHashMapper.toHash(t);
