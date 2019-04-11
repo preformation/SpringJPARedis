@@ -111,16 +111,16 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
                         if(types[0].getTypeName().equals(domainClass.getTypeName())){
                             List<T> list = (List<T>)obj;
                             saveFindByToRedis(list, idskey);
-                            return CollectionUtils.isEmpty(list)?null:obj;
+                            return obj;
                         }else{
                             List<?> list = (List<?>)obj;
                             redisService.putObjCache(idskey, new ListWrapper(list));
-                            return CollectionUtils.isEmpty(list)?Lists.newArrayListWithCapacity(0):obj;
+                            return obj;
                         }
                     }else {
                         List<?> list = (List<?>)obj;
                         redisService.putObjCache(idskey, new ListWrapper(list));
-                        return CollectionUtils.isEmpty(list)?Lists.newArrayListWithCapacity(0):obj;
+                        return obj;
                     }
                 } else {
                     if(returnType.getTypeName().equals(domainClass.getTypeName())){
