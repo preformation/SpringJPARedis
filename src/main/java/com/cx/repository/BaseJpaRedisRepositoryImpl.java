@@ -676,8 +676,8 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
     }
 
 	private List<T> findAll(List<T> result, Sort sort, Specification<T> spec) {
-		String[] paramnames = new String[]{};
-		Object[] paramvals = new Object[]{};
+		String[] paramnames = new String[2];
+		Object[] paramvals = new Object[2];
 		if(com.cx.utils.ObjectUtils.anyNotNull(spec, sort)){
 			if(!ObjectUtils.isEmpty(spec)){
 				paramnames[0] = "spec";
@@ -734,8 +734,8 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	}
 
     private <S extends T> List<S> findAll(List<S> result, Example<S> example, Sort sort) {
-        String[] paramnames = new String[]{};
-        Object[] paramvals = new Object[]{};
+        String[] paramnames = new String[2];
+        Object[] paramvals = new Object[2];
         if(com.cx.utils.ObjectUtils.anyNotNull(example, sort)){
             if(!ObjectUtils.isEmpty(example)){
                 paramnames[0] = "example";
@@ -792,8 +792,8 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
     }
 
     private Page<T> findAll(Page<T> result, Pageable pageable, Specification<T> spec) {
-        String[] paramnames = new String[]{};
-        Object[] paramvals = new Object[]{};
+        String[] paramnames = new String[2];
+        Object[] paramvals = new Object[2];
         if(com.cx.utils.ObjectUtils.anyNotNull(spec, pageable)){
             if(!ObjectUtils.isEmpty(spec)){
                 paramnames[0] = "spec";
@@ -849,8 +849,8 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
     }
 
     private <S extends T> Page<S> findAll(Page<S> result, Example<S> example, Pageable pageable) {
-        String[] paramnames = new String[]{};
-        Object[] paramvals = new Object[]{};
+        String[] paramnames = new String[2];
+        Object[] paramvals = new Object[2];
         if(com.cx.utils.ObjectUtils.anyNotNull(example, pageable)){
             if(!ObjectUtils.isEmpty(example)){
                 paramnames[0] = "example";

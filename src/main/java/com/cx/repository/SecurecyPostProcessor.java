@@ -11,6 +11,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.redis.core.BoundHashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.hash.BeanUtilsHashMapper;
@@ -62,8 +63,8 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
 
             String methodName = invocation.getMethod().getName();
             int lenth = methodName.length();
-            //boolean isAnnotationPresent = invocation.getMethod().isAnnotationPresent(Query.class);
-            if(methodName.startsWith("findBy")) {
+            boolean isAnnotationPresent = invocation.getMethod().isAnnotationPresent(Query.class);
+            if(methodName.startsWith("findBy") || isAnnotationPresent) {
                 String idskey = key("findBy", new String[]{methodName.substring(6, lenth)}, invocation.getArguments());
                 Type returnType = invocation.getMethod().getGenericReturnType();
 

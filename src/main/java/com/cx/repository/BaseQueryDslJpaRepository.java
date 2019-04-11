@@ -167,8 +167,8 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 	 */
 	@Override
 	public Page<T> findAll(Predicate predicate, Pageable pageable) {
-        String[] paramnames = new String[]{};
-        Object[] paramvals = new Object[]{};
+        String[] paramnames = new String[2];
+        Object[] paramvals = new Object[2];
         if(com.cx.utils.ObjectUtils.anyNotNull(predicate, pageable)){
             if(!ObjectUtils.isEmpty(predicate)){
                 paramnames[0] = "predicate";
@@ -418,8 +418,8 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 
 
     private List<T> findAll(List<T> result, Predicate predicate, Sort sort, OrderSpecifier<?>... orders) {
-        String[] paramnames = new String[]{};
-        Object[] paramvals = new Object[]{};
+        String[] paramnames = new String[3];
+        Object[] paramvals = new Object[3];
         if(com.cx.utils.ObjectUtils.anyNotNull(predicate, sort, orders)){
             if(!ObjectUtils.isEmpty(predicate)){
                 paramnames[0] = "predicate";
