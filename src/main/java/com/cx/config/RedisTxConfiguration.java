@@ -9,14 +9,12 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -52,21 +50,46 @@ public class RedisTxConfiguration extends CachingConfigurerSupport {
 
     @Bean
     public JedisConnectionFactory jedisConnectionFactory(JedisPoolConfig jedisPoolConfig) {
-        JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
-        jedisConnectionFactory.setHostName(redisProperties.getHost());
-        jedisConnectionFactory.setPort(redisProperties.getPort());
-        jedisConnectionFactory.setPassword(redisProperties.getPassword());
-        jedisConnectionFactory.setTimeout(redisProperties.getTimeout());
-        jedisConnectionFactory.setDatabase(redisProperties.getDatabase());
-        jedisConnectionFactory.setPoolConfig(jedisPoolConfig);
-        jedisConnectionFactory.setUsePool(true);
-        jedisConnectionFactory.afterPropertiesSet();
+        JedisConnectionFactory factory = new JedisConnectionFactory();
+        factory.setHostName(redisProperties.getHost());
+        factory.setPort(redisProperties.getPort());
+        factory.setPassword(redisProperties.getPassword());
+        factory.setTimeout(redisProperties.getTimeout());
+        factory.setDatabase(redisProperties.getDatabase());
+        factory.setPoolConfig(jedisPoolConfig);
+        factory.setUsePool(true);
+        factory.afterPropertiesSet();
+
+        return factory;
 
         //哨兵模式：Redis Sentinel监听主服务，再主服务发生故障时能够切换至从服务，将从服务升为主服务来保证故障恢复，使用该功能需要在JedisConnectionFactory设置RedisSentinelConfiguration属性，目前Jedis对Redis Sentinel提供支持。
-//        RedisSentinelConfiguration sentinelConfig = new RedisSentinelConfiguration() .master("mymaster")
-//                .sentinel("127.0.0.1", 26379) .sentinel("127.0.0.1", 26380);
-//        return new JedisConnectionFactory(sentinelConfig);
-        return jedisConnectionFactory;
+//        JedisConnectionFactory factory = null;
+//        if (!ObjectUtils.isEmpty(redisProperties.getSentinel())) {
+//            RedisSentinelConfiguration sentinelConfig = new RedisSentinelConfiguration(
+//                    redisProperties.getSentinel().getMaster(),
+//                    new HashSet<>(Arrays.asList(redisProperties.getSentinel().getNodes().split(",")))
+//            );
+//
+//            factory = new JedisConnectionFactory(sentinelConfig, jedisPoolConfig);
+//            factory.setTimeout(redisProperties.getTimeout());
+//            factory.setUsePool(true);
+//            factory.afterPropertiesSet();
+//        }
+//
+//        return factory;
+
+        //集群模式: 一般6台做分布式集群，比较稳定，加载配置时，其实只要多数节点配置上就可以，其他自己发现
+//        JedisConnectionFactory factory = null;
+//        if (!ObjectUtils.isEmpty(redisProperties.getCluster())) {
+//            RedisClusterConfiguration redisClusterConfiguration = new RedisClusterConfiguration(redisProperties.getCluster().getNodes());
+//            redisClusterConfiguration.setMaxRedirects(redisProperties.getCluster().getMaxRedirects());
+//            factory = new JedisConnectionFactory(redisClusterConfiguration, jedisPoolConfig);
+//            factory.setTimeout(redisProperties.getTimeout());
+//            factory.setUsePool(true);
+//            factory.afterPropertiesSet();
+//        }
+//
+//        return factory;
     }
 
     /**
