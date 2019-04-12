@@ -104,6 +104,9 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
                 }
 
                 Object obj = invocation.proceed();
+                if(ObjectUtils.isEmpty(obj)){
+                    return obj;
+                }
                 if(returnType.getTypeName().startsWith("java.util.List")){
                     ParameterizedType paramType = (ParameterizedType)returnType;
                     Type[] types = paramType.getActualTypeArguments();
@@ -125,7 +128,10 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
                 } else {
                     if(returnType.getTypeName().equals(domainClass.getTypeName())){
                         List<T> list = Lists.newArrayListWithCapacity(1);
-                        list.add((T)obj);
+                        T t = (T)obj;
+                        if(!ObjectUtils.isEmpty(t.getId())) {//防止空对象
+                            list.add(t);
+                        }
                         saveFindByToRedis(list, idskey);
                         return obj;
                     }else{
