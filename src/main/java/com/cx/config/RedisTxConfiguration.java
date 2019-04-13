@@ -1,5 +1,7 @@
 package com.cx.config;
 
+import com.cx.serializer.KryoRedisSerializer;
+import com.cx.serializer.ProtoStuffRedisSerializer;
 import com.cx.utils.Const;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,7 +106,7 @@ public class RedisTxConfiguration extends CachingConfigurerSupport {
         redisTemplate.setConnectionFactory(factory);
 
         // 使用kryoRedisSerializer 替换默认序列化
-        KryoRedisSerializer<Object> kryoRedisSerializer = new KryoRedisSerializer<Object>(Object.class);
+        //KryoRedisSerializer<Object> kryoRedisSerializer = new KryoRedisSerializer<Object>(Object.class);
         //Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<Object>(Object.class);
         //GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer = new GenericJackson2JsonRedisSerializer();
         //FastJsonRedisSerializer<Object> fastJsonRedisSerializer = new FastJsonRedisSerializer<>(Object.class);

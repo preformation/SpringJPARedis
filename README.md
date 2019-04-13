@@ -60,7 +60,7 @@ SpringBoot 开源企业级JPA REDIS无缝整合精细化缓存
 *   支持HikariCP连接池
 *   支持lombok方式
 
-一层缓存实现（StringRedisTemplate）
+一层缓存实现（StringRedisTemplate）参看SpringJPARedisDemo项目
 *   Controller接口层缓存，无须考虑排序问题，缓存条数可能过多，顶层数据变化比较大，尤其分页和数据展现形式具多样性，但好在接口不多
 *   支持ProtoStuffRedisSerializer最快方式
 *   缓存时间默认4天，不能动态进行数据变化的缓存变更

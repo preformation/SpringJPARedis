@@ -1,4 +1,4 @@
-package com.cx.config;
+package com.cx.serializer;
 
 import com.dyuproject.protostuff.LinkedBuffer;
 import com.dyuproject.protostuff.ProtostuffIOUtil;

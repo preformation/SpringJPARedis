@@ -1,4 +1,4 @@
-package com.cx.utils;
+package com.cx.entity;
 
 import java.io.Serializable;
 

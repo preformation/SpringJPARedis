@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.cx.repository.SecurecyPostProcessor,\
+  com.cx.service.impl.RedisService
+

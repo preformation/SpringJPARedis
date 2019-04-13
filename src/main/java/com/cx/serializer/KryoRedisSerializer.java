@@ -1,4 +1,4 @@
-package com.cx.config;
+package com.cx.serializer;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;

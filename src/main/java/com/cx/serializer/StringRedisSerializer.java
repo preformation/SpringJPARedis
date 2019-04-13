@@ -1,4 +1,4 @@
-package com.cx.config;
+package com.cx.serializer;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;

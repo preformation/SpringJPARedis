@@ -17,7 +17,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.hash.BeanUtilsHashMapper;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.support.RepositoryProxyPostProcessor;
-import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -28,7 +27,6 @@ import java.util.*;
 
 import static com.cx.utils.Const.REDIS_2ND_KEY_PRE;
 
-@Component
 public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Serializable> implements RepositoryProxyPostProcessor {
 
     @Autowired

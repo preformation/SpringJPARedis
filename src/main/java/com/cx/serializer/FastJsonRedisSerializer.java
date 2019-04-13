@@ -1,4 +1,4 @@
-package com.cx.config;
+package com.cx.serializer;
 
 import com.alibaba.fastjson.TypeReference;
 import com.cx.utils.JsonHelper;
