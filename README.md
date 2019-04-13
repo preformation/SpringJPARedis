@@ -36,7 +36,36 @@ SpringBoot 开源企业级JPA REDIS无缝整合精细化缓存
 
 # 版本说明
 
-*   初步非模块化无在线依赖包 1.0-SNAPSHOT 版本，全部完成功能后进行重构优化，发行版本，做成Maven仓库的依赖包
+*   重构优化，目前发行版本1.0.RELEASE，做成Maven仓库的依赖包
+```
+Maven版：
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+    
+    <dependency>
+        <groupId>com.github.preformation</groupId>
+        <artifactId>SpringJPARedis</artifactId>
+        <version>1.0.RELEASE</version>
+    </dependency>
+    
+Gradle版：
+
+    allprojects {
+        repositories {
+            ...
+            maven { url 'https://jitpack.io' }
+        }
+    }
+    
+    dependencies {
+         implementation 'com.github.preformation:SpringJPARedis:1.0.RELEASE'
+    }
+```   
 
 # 本版说明(v1.0-SNAPSHOT)
 
