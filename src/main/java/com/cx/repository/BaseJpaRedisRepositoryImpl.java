@@ -242,15 +242,17 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 		String idskey = key("findAll", null, null);
 		List<String> entitykeys = entityKeys(idskey);
 		final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
+        List<String> idkeyList = Lists.newArrayListWithCapacity(10);
 		try {
 		    if(!CollectionUtils.isEmpty(entitykeys)) {
-//            finalEntities = (List<T>)redisTemplate.opsForValue().multiGet(entitykeys);
                 entitykeys.stream().forEach(key -> {
-                    T entity = getOnlyOne(key(key));
-                    if (Objects.nonNull(entity)) {
-                        finalEntities.add(entity);
-                    }
+                    idkeyList.add(key(key));
+//                    T entity = getOnlyOne(key(key));
+//                    if (Objects.nonNull(entity)) {
+//                        finalEntities.add(entity);
+//                    }
                 });
+                finalEntities.addAll((List<T>)redisTemplate.opsForValue().multiGet(idkeyList));
 
                 if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
                     return finalEntities;
@@ -289,15 +291,18 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         String idskey = key("findAll", new String[]{"ids"}, new Object[]{ids});
         List<String> entitykeys = entityKeys(idskey);
         final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
+        List<String> idkeyList = Lists.newArrayListWithCapacity(10);
         List<String> idList = Lists.newArrayListWithCapacity(10);
         try {
             ids.forEach(id -> {
+                idkeyList.add(key(id));
                 idList.add(id+"");
-                T entity = getOnlyOne(key(id));
-                if(Objects.nonNull(entity)){
-                    finalEntities.add(entity);
-                }
+//                T entity = getOnlyOne(key(id));
+//                if(Objects.nonNull(entity)){
+//                    finalEntities.add(entity);
+//                }
             });
+            finalEntities.addAll((List<T>)redisTemplate.opsForValue().multiGet(idkeyList));
 
             if(!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)){
                 return finalEntities;
@@ -692,15 +697,17 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 		String idskey = key("findAll", paramnames, paramvals);
 		List<String> entitykeys = entityKeys(idskey);
 		final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
+        List<String> idkeyList = Lists.newArrayListWithCapacity(10);
 		try {
 			if(!CollectionUtils.isEmpty(entitykeys)) {
-//            finalEntities = (List<T>)redisTemplate.opsForValue().multiGet(entitykeys);
 				entitykeys.stream().forEach(key -> {
-					T entity = getOnlyOne(key);
-					if (Objects.nonNull(entity)) {
-						finalEntities.add(entity);
-					}
+                    idkeyList.add(key);
+//					T entity = getOnlyOne(key);
+//					if (Objects.nonNull(entity)) {
+//						finalEntities.add(entity);
+//					}
 				});
+                finalEntities.addAll((List<T>)redisTemplate.opsForValue().multiGet(idkeyList));
 
 				if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
 					return finalEntities;
@@ -750,15 +757,17 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         String idskey = key("findAll", paramnames, paramvals);
         List<String> entitykeys = entityKeys(idskey);
         final List<S> finalEntities = Lists.newArrayListWithCapacity(10);
+        List<String> idkeyList = Lists.newArrayListWithCapacity(10);
         try {
             if(!CollectionUtils.isEmpty(entitykeys)) {
-//            finalEntities = (List<S>)redisTemplate.opsForValue().multiGet(entitykeys);
                 entitykeys.stream().forEach(key -> {
-                    S entity = (S)getOnlyOne(key);//父类就是子类，故强转
-                    if (Objects.nonNull(entity)) {
-                        finalEntities.add(entity);
-                    }
+                    idkeyList.add(key);
+//                    S entity = (S)getOnlyOne(key);//父类就是子类，故强转
+//                    if (Objects.nonNull(entity)) {
+//                        finalEntities.add(entity);
+//                    }
                 });
+                finalEntities.addAll((List<S>)redisTemplate.opsForValue().multiGet(idkeyList));
 
                 if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
                     return finalEntities;
@@ -808,14 +817,17 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         String idskey = key("findAll", paramnames, paramvals);
         List<String> entitykeys = entityKeys(idskey);
         final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
+        List<String> idkeyList = Lists.newArrayListWithCapacity(10);
         try {
             if(!CollectionUtils.isEmpty(entitykeys)) {
                 entitykeys.stream().forEach(key -> {
-                    T entity = getOnlyOne(key);
-                    if (Objects.nonNull(entity)) {
-                        finalEntities.add(entity);
-                    }
+                    idkeyList.add(key);
+//                    T entity = getOnlyOne(key);
+//                    if (Objects.nonNull(entity)) {
+//                        finalEntities.add(entity);
+//                    }
                 });
+                finalEntities.addAll((List<T>)redisTemplate.opsForValue().multiGet(idkeyList));
 
                 if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
                     return new PageImpl(finalEntities);
@@ -865,14 +877,17 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         String idskey = key("findAll", paramnames, paramvals);
         List<String> entitykeys = entityKeys(idskey);
         final List<S> finalEntities = Lists.newArrayListWithCapacity(10);
+        List<String> idkeyList = Lists.newArrayListWithCapacity(10);
         try {
             if(!CollectionUtils.isEmpty(entitykeys)) {
                 entitykeys.stream().forEach(key -> {
-                    S entity = (S)getOnlyOne(key);//父类就是子类，故强转
-                    if (Objects.nonNull(entity)) {
-                        finalEntities.add(entity);
-                    }
+                    idkeyList.add(key);
+//                    S entity = (S)getOnlyOne(key);//父类就是子类，故强转
+//                    if (Objects.nonNull(entity)) {
+//                        finalEntities.add(entity);
+//                    }
                 });
+                finalEntities.addAll((List<S>)redisTemplate.opsForValue().multiGet(idkeyList));
 
                 if (!CollectionUtils.isEmpty(finalEntities) && !CollectionUtils.isEmpty(entitykeys)) {
                     return new PageImpl(finalEntities);

@@ -23,7 +23,10 @@ import org.springframework.util.ObjectUtils;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.cx.utils.Const.REDIS_2ND_KEY_PRE;
 
@@ -152,17 +155,18 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
         public List<T> findByToRedis(String idskey) {
             List<String> entitykeys = entityKeys(idskey);
             final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
-
+            List<String> idkeyList = Lists.newArrayListWithCapacity(10);
             try {
                 if(!CollectionUtils.isEmpty(entitykeys)) {
-//                finalEntities = (List<T>) redisTemplate.opsForValue().multiGet(entitykeys);
                     entitykeys.stream().forEach(key -> {
-                        T entity = getOnlyOne(keyspace() + ":ids:" + key);
-                        if(Objects.nonNull(entity)){
-                            finalEntities.add(entity);
-                        }
+                        idkeyList.add(keyspace() + ":ids:" + key);
+//                        T entity = getOnlyOne(keyspace() + ":ids:" + key);
+//                        if(Objects.nonNull(entity)){
+//                            finalEntities.add(entity);
+//                        }
                     });
                 }
+                finalEntities.addAll((List<T>)redisTemplate.opsForValue().multiGet(idkeyList));
 
                 return finalEntities;
             } catch (Exception e) {
