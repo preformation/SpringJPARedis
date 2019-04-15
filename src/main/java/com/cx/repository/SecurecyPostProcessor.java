@@ -23,10 +23,7 @@ import org.springframework.util.ObjectUtils;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.cx.utils.Const.REDIS_2ND_KEY_PRE;
 
@@ -155,18 +152,15 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
         public List<T> findByToRedis(String idskey) {
             List<String> entitykeys = entityKeys(idskey);
             final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
-            List<String> idkeyList = Lists.newArrayListWithCapacity(10);
             try {
                 if(!CollectionUtils.isEmpty(entitykeys)) {
                     entitykeys.stream().forEach(key -> {
-                        idkeyList.add(keyspace() + ":ids:" + key);
-//                        T entity = getOnlyOne(keyspace() + ":ids:" + key);
-//                        if(Objects.nonNull(entity)){
-//                            finalEntities.add(entity);
-//                        }
+                        T entity = getOnlyOne(keyspace() + ":ids:" + key);
+                        if(Objects.nonNull(entity)){
+                            finalEntities.add(entity);
+                        }
                     });
                 }
-                finalEntities.addAll((List<T>)redisTemplate.opsForValue().multiGet(idkeyList));
 
                 return finalEntities;
             } catch (Exception e) {
@@ -191,9 +185,7 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
                             BoundHashOperations<String, String, String> operations = redisTemplate.boundHashOps(key(t.getId()));
                             BeanHelper.registerConvertUtils();
                             Map<String, String> map = beanUtilsHashMapper.toHash(t);
-                            map.entrySet().stream().forEach(item -> {
-                                operations.put(item.getKey(), item.getValue());
-                            });
+                            operations.putAll(map);
                         }
                 );
 

@@ -50,7 +50,7 @@ Maven版：
     <dependency>
         <groupId>com.github.preformation</groupId>
         <artifactId>SpringJPARedis</artifactId>
-        <version>1.0.RELEASE</version>
+        <version>v1.0.RELEASE</version>
     </dependency>
     
 Gradle版：
@@ -63,7 +63,7 @@ Gradle版：
     }
     
     dependencies {
-         implementation 'com.github.preformation:SpringJPARedis:1.0.RELEASE'
+         implementation 'com.github.preformation:SpringJPARedis:v1.0.RELEASE'
     }
 ```   
 
