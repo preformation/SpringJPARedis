@@ -5,6 +5,7 @@ import com.cx.service.impl.RedisService;
 import com.cx.utils.BeanHelper;
 import com.cx.utils.Const;
 import com.cx.utils.ObjWrapper;
+import com.cx.utils.ProtoStuffUtil;
 import com.google.common.collect.Lists;
 import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.OrderSpecifier;
@@ -91,7 +92,7 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 	 */
 	@Override
 	public T findOne(Predicate predicate) {
-        int conditionsHashcode = predicate.hashCode();
+        int conditionsHashcode = ProtoStuffUtil.serialize(predicate).hashCode();
         String idskey = key("findOne", new String[]{"predicate"}, new Object[]{conditionsHashcode});
         String entitykey = entityKey(idskey);
         try {
@@ -170,11 +171,11 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
         if(com.cx.utils.ObjectUtils.anyNotNull(predicate, pageable)){
             if(!ObjectUtils.isEmpty(predicate)){
                 paramnames[0] = "predicate";
-                paramvals[0] = predicate.hashCode();
+                paramvals[0] = ProtoStuffUtil.serialize(predicate).hashCode();
             }
             if(!ObjectUtils.isEmpty(pageable)){
                 paramnames[1] = "pageable";
-                paramvals[1] = pageable.hashCode();
+                paramvals[1] = ProtoStuffUtil.serialize(pageable).hashCode();
             }
         }
 
@@ -241,7 +242,7 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 	 */
 	@Override
 	public long count(Predicate predicate) {
-        int conditionsHashcode = predicate.hashCode();
+        int conditionsHashcode = ProtoStuffUtil.serialize(predicate).hashCode();
         String idskey = key("count", new String[]{"count"}, new Object[]{conditionsHashcode});
         ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
         try {
@@ -419,15 +420,15 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
         if(com.cx.utils.ObjectUtils.anyNotNull(predicate, sort, orders)){
             if(!ObjectUtils.isEmpty(predicate)){
                 paramnames[0] = "predicate";
-                paramvals[0] = predicate.hashCode();
+                paramvals[0] = ProtoStuffUtil.serialize(predicate).hashCode();
             }
             if(!ObjectUtils.isEmpty(sort)){
                 paramnames[1] = "sort";
-                paramvals[1] = sort.hashCode();
+                paramvals[1] = ProtoStuffUtil.serialize(sort).hashCode();
             }
             if(!ObjectUtils.isEmpty(orders)){
                 paramnames[2] = "orders";
-                paramvals[2] = orders.hashCode();
+                paramvals[2] = ProtoStuffUtil.serialize(orders).hashCode();
             }
         }
 
