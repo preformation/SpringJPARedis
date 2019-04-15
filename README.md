@@ -36,7 +36,7 @@ SpringBoot 开源企业级JPA REDIS无缝整合精细化缓存
 
 # 版本说明
 
-*   重构优化，目前发行版本1.0.Beta，做成Maven仓库的依赖包
+*   重构优化，目前发行版本v1.0.Beta，做成Maven仓库的依赖包
 ```
 Maven版：
 
@@ -50,7 +50,7 @@ Maven版：
     <dependency>
         <groupId>com.github.preformation</groupId>
         <artifactId>SpringJPARedis</artifactId>
-        <version>1.0.Beta</version>
+        <version>v1.0.Beta</version>
     </dependency>
     
 Gradle版：
@@ -63,7 +63,7 @@ Gradle版：
     }
     
     dependencies {
-         implementation 'com.github.preformation:SpringJPARedis:1.0.Beta'
+         implementation 'com.github.preformation:SpringJPARedis:v1.0.Beta'
     }
 ```   
 
