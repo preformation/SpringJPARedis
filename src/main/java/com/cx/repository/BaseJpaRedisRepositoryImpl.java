@@ -615,22 +615,18 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 		StringBuffer sb = new StringBuffer(keyspace());
 		sb.append(":finds").append(StringUtils.isBlank(methodname)? "" : ":"+methodname);
 		if(ArrayUtils.isNotEmpty(paramnames) && ArrayUtils.isNotEmpty(paramvals)) {
-			Arrays.stream(paramnames).forEach(fieldname -> {
+			Arrays.stream(paramnames).filter(p->null!=p).forEach(fieldname -> {
 				sb.append(":"+fieldname);
 			});
 
-			Arrays.stream(paramvals).forEach(paramval -> {
-                if(ObjectUtils.isEmpty(paramval)){
-                    sb.append(":0");
-                }else {
-                    if (paramval instanceof List) {
-                        Collections.sort((List) paramval);
-                    }
-                    if (paramval instanceof Object[]) {
-                        Arrays.sort((Object[]) paramval);
-                    }
-                    sb.append(":" + paramval.hashCode());
+			Arrays.stream(paramvals).filter(p->null!=p).forEach(paramval -> {
+                if (paramval instanceof List) {
+                    Collections.sort((List) paramval);
                 }
+                if (paramval instanceof Object[]) {
+                    Arrays.sort((Object[]) paramval);
+                }
+                sb.append(":" + paramval.hashCode());
 			});
 		}
 
