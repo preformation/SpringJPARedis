@@ -620,13 +620,17 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 			});
 
 			Arrays.stream(paramvals).forEach(paramval -> {
-				if(paramval instanceof List){
-					Collections.sort((List)paramval);
-				}
-				if(paramval instanceof Object[]) {
-					Arrays.sort((Object[])paramval);
-				}
-				sb.append(":"+paramval.hashCode());
+                if(ObjectUtils.isEmpty(paramval)){
+                    sb.append(":0");
+                }else {
+                    if (paramval instanceof List) {
+                        Collections.sort((List) paramval);
+                    }
+                    if (paramval instanceof Object[]) {
+                        Arrays.sort((Object[]) paramval);
+                    }
+                    sb.append(":" + paramval.hashCode());
+                }
 			});
 		}
 

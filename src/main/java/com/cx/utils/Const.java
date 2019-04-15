@@ -2,6 +2,7 @@ package com.cx.utils;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,13 +46,17 @@ public class Const {
                 sb.append(":"+fieldname);
             });
             Arrays.stream(paramvals).forEach(paramval -> {
-                if(paramval instanceof List){
-                    Collections.sort((List)paramval);
+                if(ObjectUtils.isEmpty(paramval)){
+                    sb.append(":0");
+                }else {
+                    if (paramval instanceof List) {
+                        Collections.sort((List) paramval);
+                    }
+                    if (paramval instanceof Object[]) {
+                        Arrays.sort((Object[]) paramval);
+                    }
+                    sb.append(":" + paramval.hashCode());
                 }
-                if(paramval instanceof Object[]) {
-                    Arrays.sort((Object[])paramval);
-                }
-                sb.append(":"+paramval.hashCode());
             });
         }
 
