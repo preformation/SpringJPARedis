@@ -237,9 +237,9 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 
 	public List<T> findAll() {
 		String idskey = key("findAll", null, null);
-		List<String> entitykeys = entityKeys(idskey);
 		final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
 		try {
+            List<String> entitykeys = entityKeys(idskey);
 		    if(!CollectionUtils.isEmpty(entitykeys)) {
                 entitykeys.stream().forEach(key -> {
                     T entity = getOnlyOne(key(key));
@@ -281,10 +281,10 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 
 	public List<T> findAll(Iterable<ID> ids) {
         String idskey = key("findAll", new String[]{"ids"}, new Object[]{ids});
-        List<String> entitykeys = entityKeys(idskey);
         final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
         List<String> idList = Lists.newArrayListWithCapacity(10);
         try {
+            List<String> entitykeys = entityKeys(idskey);
             ids.forEach(id -> {
                 idList.add(id+"");
                 T entity = getOnlyOne(key(id));
@@ -332,8 +332,8 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	public T findOne(Specification<T> spec) {
         int conditionsHashcode = new String(ProtoStuffUtil.serialize(spec)).hashCode();
         String idskey = key("findOne", new String[]{"spec"}, new Object[]{conditionsHashcode});
-        String entitykey = entityKey(idskey);
         try {
+            String entitykey = entityKey(idskey);
             if(StringUtils.isNotBlank(entitykey)) {
                 T entity = getOnlyOne(entitykey);
 
@@ -378,8 +378,8 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	public <S extends T> S findOne(Example<S> example) {
         int conditionsHashcode = new String(ProtoStuffUtil.serialize(example)).hashCode();
         String idskey = key("findOne", new String[]{"spec"}, new Object[]{conditionsHashcode});
-        String entitykey = entityKey(idskey);
         try {
+            String entitykey = entityKey(idskey);
             if(StringUtils.isNotBlank(entitykey)) {
                 S entity = (S)getOnlyOne(entitykey);//父类就是子类，故强转
 
@@ -412,9 +412,11 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	public <S extends T> long count(Example<S> example) {
         int conditionsHashcode = new String(ProtoStuffUtil.serialize(example)).hashCode();
         String idskey = key("count", new String[]{"count"}, new Object[]{conditionsHashcode});
-        ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
+
         try {
-            if(ObjectUtils.isEmpty(objWrapper)) {
+            ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
+
+            if(!ObjectUtils.isEmpty(objWrapper)) {
                 return objWrapper.getData();
             }
 
@@ -433,9 +435,10 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	public <S extends T> boolean exists(Example<S> example) {
         int conditionsHashcode = new String(ProtoStuffUtil.serialize(example)).hashCode();
         String idskey = key("exists", new String[]{"exists"}, new Object[]{conditionsHashcode});
-        ObjWrapper<Boolean> objWrapper = (ObjWrapper<Boolean>)countKey(idskey);
+
         try {
-            if(ObjectUtils.isEmpty(objWrapper)) {
+            ObjWrapper<Boolean> objWrapper = (ObjWrapper<Boolean>)countKey(idskey);
+            if(!ObjectUtils.isEmpty(objWrapper)) {
                 return objWrapper.getData();
             }
 
@@ -477,9 +480,9 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	public long count(Specification<T> spec) {
         int conditionsHashcode = new String(ProtoStuffUtil.serialize(spec)).hashCode();
         String idskey = key("count", new String[]{"count"}, new Object[]{conditionsHashcode});
-        ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
         try {
-            if(ObjectUtils.isEmpty(objWrapper)) {
+            ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
+            if(!ObjectUtils.isEmpty(objWrapper)) {
                 return objWrapper.getData();
             }
 
@@ -670,10 +673,10 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         }
 
 		String idskey = key("findAll", paramnames, paramvals);
-		List<String> entitykeys = entityKeys(idskey);
 		final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
-		try {
-			if(!CollectionUtils.isEmpty(entitykeys)) {
+        try {
+            List<String> entitykeys = entityKeys(idskey);
+            if(!CollectionUtils.isEmpty(entitykeys)) {
 				entitykeys.stream().forEach(key -> {
 					T entity = getOnlyOne(key);
 					if (Objects.nonNull(entity)) {
@@ -733,9 +736,9 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         }
 
         String idskey = key("findAll", paramnames, paramvals);
-        List<String> entitykeys = entityKeys(idskey);
         final List<S> finalEntities = Lists.newArrayListWithCapacity(10);
         try {
+            List<String> entitykeys = entityKeys(idskey);
             if(!CollectionUtils.isEmpty(entitykeys)) {
                 entitykeys.stream().forEach(key -> {
                     S entity = (S)getOnlyOne(key);//父类就是子类，故强转
@@ -793,9 +796,9 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         }
 
         String idskey = key("findAll", paramnames, paramvals);
-        List<String> entitykeys = entityKeys(idskey);
         final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
         try {
+            List<String> entitykeys = entityKeys(idskey);
             if(!CollectionUtils.isEmpty(entitykeys)) {
                 entitykeys.stream().forEach(key -> {
                     T entity = getOnlyOne(key);
@@ -853,9 +856,9 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         }
 
         String idskey = key("findAll", paramnames, paramvals);
-        List<String> entitykeys = entityKeys(idskey);
         final List<S> finalEntities = Lists.newArrayListWithCapacity(10);
         try {
+            List<String> entitykeys = entityKeys(idskey);
             if(!CollectionUtils.isEmpty(entitykeys)) {
                 entitykeys.stream().forEach(key -> {
                     S entity = (S)getOnlyOne(key);//父类就是子类，故强转

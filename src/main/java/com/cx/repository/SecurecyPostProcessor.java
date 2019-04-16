@@ -150,9 +150,9 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
          * @return
          */
         public List<T> findByToRedis(String idskey) {
-            List<String> entitykeys = entityKeys(idskey);
             final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
             try {
+                List<String> entitykeys = entityKeys(idskey);
                 if(!CollectionUtils.isEmpty(entitykeys)) {
                     entitykeys.stream().forEach(key -> {
                         T entity = getOnlyOne(keyspace() + ":ids:" + key);
@@ -177,8 +177,8 @@ public class SecurecyPostProcessor<T extends RedisEntity<ID>, ID extends Seriali
                 return entities;
             }
 
+            List<String> ids = Lists.newArrayListWithCapacity(10);
             try {
-                List<String> ids = Lists.newArrayListWithCapacity(10);
                 entities.stream().forEach(t ->
                         {
                             ids.add(t.getId()+"");

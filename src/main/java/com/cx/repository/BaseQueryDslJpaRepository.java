@@ -94,8 +94,8 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 	public T findOne(Predicate predicate) {
         int conditionsHashcode = new String(ProtoStuffUtil.serialize(predicate)).hashCode();
         String idskey = key("findOne", new String[]{"predicate"}, new Object[]{conditionsHashcode});
-        String entitykey = entityKey(idskey);
         try {
+            String entitykey = entityKey(idskey);
             if(StringUtils.isNotBlank(entitykey)) {
                 T entity = getOnlyOne(entitykey);
 
@@ -168,21 +168,19 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 	public Page<T> findAll(Predicate predicate, Pageable pageable) {
         String[] paramnames = new String[2];
         Object[] paramvals = new Object[2];
-        if(com.cx.utils.ObjectUtils.anyNotNull(predicate, pageable)){
-            if(!ObjectUtils.isEmpty(predicate)){
-                paramnames[0] = "predicate";
-                paramvals[0] = new String(ProtoStuffUtil.serialize(predicate)).hashCode();
-            }
-            if(!ObjectUtils.isEmpty(pageable)){
-                paramnames[1] = "pageable";
-                paramvals[1] = new String(ProtoStuffUtil.serialize(pageable)).hashCode();
-            }
+        if(!ObjectUtils.isEmpty(predicate)){
+            paramnames[0] = "predicate";
+            paramvals[0] = new String(ProtoStuffUtil.serialize(predicate)).hashCode();
+        }
+        if(!ObjectUtils.isEmpty(pageable)){
+            paramnames[1] = "pageable";
+            paramvals[1] = new String(ProtoStuffUtil.serialize(pageable)).hashCode();
         }
 
         String idskey = key("findAll", paramnames, paramvals);
-        List<String> entitykeys = entityKeys(idskey);
         final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
         try {
+            List<String> entitykeys = entityKeys(idskey);
             if(!CollectionUtils.isEmpty(entitykeys)) {
                 entitykeys.stream().forEach(key -> {
                     T entity = getOnlyOne(key);
@@ -244,9 +242,9 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 	public long count(Predicate predicate) {
         int conditionsHashcode = new String(ProtoStuffUtil.serialize(predicate)).hashCode();
         String idskey = key("count", new String[]{"count"}, new Object[]{conditionsHashcode});
-        ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
         try {
-            if(ObjectUtils.isEmpty(objWrapper)) {
+            ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
+            if(!ObjectUtils.isEmpty(objWrapper)) {
                 return objWrapper.getData();
             }
 
@@ -431,9 +429,9 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
         }
 
         String idskey = key("findAll", paramnames, paramvals);
-        List<String> entitykeys = entityKeys(idskey);
         final List<T> finalEntities = Lists.newArrayListWithCapacity(10);
         try {
+            List<String> entitykeys = entityKeys(idskey);
             if(!CollectionUtils.isEmpty(entitykeys)) {
                 entitykeys.stream().forEach(key -> {
                     T entity = getOnlyOne(key);
