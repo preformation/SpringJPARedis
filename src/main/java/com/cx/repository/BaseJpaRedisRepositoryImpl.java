@@ -330,7 +330,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	}
 
 	public T findOne(Specification<T> spec) {
-        int conditionsHashcode = ProtoStuffUtil.serialize(spec).hashCode();
+        int conditionsHashcode = new String(ProtoStuffUtil.serialize(spec)).hashCode();
         String idskey = key("findOne", new String[]{"spec"}, new Object[]{conditionsHashcode});
         String entitykey = entityKey(idskey);
         try {
@@ -376,7 +376,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 
 	@Override
 	public <S extends T> S findOne(Example<S> example) {
-        int conditionsHashcode = ProtoStuffUtil.serialize(example).hashCode();
+        int conditionsHashcode = new String(ProtoStuffUtil.serialize(example)).hashCode();
         String idskey = key("findOne", new String[]{"spec"}, new Object[]{conditionsHashcode});
         String entitykey = entityKey(idskey);
         try {
@@ -410,7 +410,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 
 	@Override
 	public <S extends T> long count(Example<S> example) {
-        int conditionsHashcode = ProtoStuffUtil.serialize(example).hashCode();
+        int conditionsHashcode = new String(ProtoStuffUtil.serialize(example)).hashCode();
         String idskey = key("count", new String[]{"count"}, new Object[]{conditionsHashcode});
         ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
         try {
@@ -431,7 +431,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 
 	@Override
 	public <S extends T> boolean exists(Example<S> example) {
-        int conditionsHashcode = ProtoStuffUtil.serialize(example).hashCode();
+        int conditionsHashcode = new String(ProtoStuffUtil.serialize(example)).hashCode();
         String idskey = key("exists", new String[]{"exists"}, new Object[]{conditionsHashcode});
         ObjWrapper<Boolean> objWrapper = (ObjWrapper<Boolean>)countKey(idskey);
         try {
@@ -475,7 +475,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	}
 
 	public long count(Specification<T> spec) {
-        int conditionsHashcode = ProtoStuffUtil.serialize(spec).hashCode();
+        int conditionsHashcode = new String(ProtoStuffUtil.serialize(spec)).hashCode();
         String idskey = key("count", new String[]{"count"}, new Object[]{conditionsHashcode});
         ObjWrapper<Long> objWrapper = (ObjWrapper<Long>)countKey(idskey);
         try {
@@ -663,11 +663,11 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 		if(com.cx.utils.ObjectUtils.anyNotNull(spec, sort)){
 			if(!ObjectUtils.isEmpty(spec)){
 				paramnames[0] = "spec";
-				paramvals[0] = ProtoStuffUtil.serialize(spec).hashCode();
+				paramvals[0] = new String(ProtoStuffUtil.serialize(spec)).hashCode();
 			}
 			if(!ObjectUtils.isEmpty(sort)){
 				paramnames[1] = "sort";
-				paramvals[1] = ProtoStuffUtil.serialize(sort).hashCode();
+				paramvals[1] = new String(ProtoStuffUtil.serialize(sort)).hashCode();
 			}
 		}
 
@@ -718,11 +718,11 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         if(com.cx.utils.ObjectUtils.anyNotNull(example, sort)){
             if(!ObjectUtils.isEmpty(example)){
                 paramnames[0] = "example";
-                paramvals[0] = ProtoStuffUtil.serialize(example).hashCode();
+                paramvals[0] = new String(ProtoStuffUtil.serialize(example)).hashCode();
             }
             if(!ObjectUtils.isEmpty(sort)){
                 paramnames[1] = "sort";
-                paramvals[1] = ProtoStuffUtil.serialize(sort).hashCode();
+                paramvals[1] = new String(ProtoStuffUtil.serialize(sort)).hashCode();
             }
         }
 
@@ -773,11 +773,11 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         if(com.cx.utils.ObjectUtils.anyNotNull(spec, pageable)){
             if(!ObjectUtils.isEmpty(spec)){
                 paramnames[0] = "spec";
-                paramvals[0] = ProtoStuffUtil.serialize(spec).hashCode();
+                paramvals[0] = new String(ProtoStuffUtil.serialize(spec)).hashCode();
             }
             if(!ObjectUtils.isEmpty(pageable)){
                 paramnames[1] = "pageable";
-                paramvals[1] = ProtoStuffUtil.serialize(pageable).hashCode();
+                paramvals[1] = new String(ProtoStuffUtil.serialize(pageable)).hashCode();
             }
         }
 
@@ -828,11 +828,11 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         if(com.cx.utils.ObjectUtils.anyNotNull(example, pageable)){
             if(!ObjectUtils.isEmpty(example)){
                 paramnames[0] = "example";
-                paramvals[0] = ProtoStuffUtil.serialize(example).hashCode();
+                paramvals[0] = new String(ProtoStuffUtil.serialize(example)).hashCode();
             }
             if(!ObjectUtils.isEmpty(pageable)){
                 paramnames[1] = "pageable";
-                paramvals[1] = ProtoStuffUtil.serialize(pageable).hashCode();
+                paramvals[1] = new String(ProtoStuffUtil.serialize(pageable)).hashCode();
             }
         }
 
