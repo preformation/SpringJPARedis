@@ -322,11 +322,11 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
     }
 
 	public List<T> findAll(Sort sort) {
-        return findAll(super.findAll(sort), sort, null);
+        return findAllByCache(sort, null);
 	}
 
 	public Page<T> findAll(Pageable pageable) {
-        return findAll(super.findAll(pageable), pageable, null);
+        return findAllPageByCache(pageable, null);
 	}
 
 	public T findOne(Specification<T> spec) {
@@ -363,15 +363,15 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 	}
 
 	public List<T> findAll(Specification<T> spec) {
-        return findAll(super.findAll(spec), null, spec);
+        return findAllByCache(null, spec);
 	}
 
 	public Page<T> findAll(Specification<T> spec, Pageable pageable) {
-        return findAll(super.findAll(spec, pageable), pageable, spec);
+        return findAllPageByCache(pageable, spec);
 	}
 
 	public List<T> findAll(Specification<T> spec, Sort sort) {
-        return findAll(super.findAll(spec, sort), sort, spec);
+        return findAllByCache(sort, spec);
 	}
 
 	@Override
@@ -452,17 +452,17 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 
 	@Override
 	public <S extends T> List<S> findAll(Example<S> example) {
-        return findAll(super.findAll(example), example, null);
+        return findAllByCache(example, null);
 	}
 
 	@Override
 	public <S extends T> List<S> findAll(Example<S> example, Sort sort) {
-        return findAll(super.findAll(example, sort), example, sort);
+        return findAllByCache(example, sort);
 	}
 
 	@Override
 	public <S extends T> Page<S> findAll(Example<S> example, Pageable pageable) {
-        return findAll(super.findAll(example, pageable), example, pageable);
+        return findAllPageByCache(example, pageable);
 	}
 
 	public long count() {
@@ -657,19 +657,17 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         return beanUtilsHashMapper.fromHash(entries);
     }
 
-	private List<T> findAll(List<T> result, Sort sort, Specification<T> spec) {
+	private List<T> findAllByCache(Sort sort, Specification<T> spec) {
 		String[] paramnames = new String[2];
 		Object[] paramvals = new Object[2];
-		if(com.cx.utils.ObjectUtils.anyNotNull(spec, sort)){
-			if(!ObjectUtils.isEmpty(spec)){
-				paramnames[0] = "spec";
-				paramvals[0] = new String(ProtoStuffUtil.serialize(spec)).hashCode();
-			}
-			if(!ObjectUtils.isEmpty(sort)){
-				paramnames[1] = "sort";
-				paramvals[1] = new String(ProtoStuffUtil.serialize(sort)).hashCode();
-			}
-		}
+        if(!ObjectUtils.isEmpty(spec)){
+            paramnames[0] = "spec";
+            paramvals[0] = new String(ProtoStuffUtil.serialize(spec)).hashCode();
+        }
+        if(!ObjectUtils.isEmpty(sort)){
+            paramnames[1] = "sort";
+            paramvals[1] = new String(ProtoStuffUtil.serialize(sort)).hashCode();
+        }
 
 		String idskey = key("findAll", paramnames, paramvals);
 		List<String> entitykeys = entityKeys(idskey);
@@ -688,6 +686,16 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 				}
 			}
 
+            List<T> result = null;
+            if(!ObjectUtils.isEmpty(spec) && ObjectUtils.isEmpty(sort)){
+                result = super.findAll(spec);
+            }
+            if(!ObjectUtils.isEmpty(sort) && ObjectUtils.isEmpty(spec)){
+                result = super.findAll(sort);
+            }
+            if(com.cx.utils.ObjectUtils.allNotNull(spec, sort)){
+                result = super.findAll(spec, sort);
+            }
 			if(CollectionUtils.isEmpty(result)){
 				return result;
 			}
@@ -712,18 +720,16 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
 		}
 	}
 
-    private <S extends T> List<S> findAll(List<S> result, Example<S> example, Sort sort) {
+    private <S extends T> List<S> findAllByCache(Example<S> example, Sort sort) {
         String[] paramnames = new String[2];
         Object[] paramvals = new Object[2];
-        if(com.cx.utils.ObjectUtils.anyNotNull(example, sort)){
-            if(!ObjectUtils.isEmpty(example)){
-                paramnames[0] = "example";
-                paramvals[0] = new String(ProtoStuffUtil.serialize(example)).hashCode();
-            }
-            if(!ObjectUtils.isEmpty(sort)){
-                paramnames[1] = "sort";
-                paramvals[1] = new String(ProtoStuffUtil.serialize(sort)).hashCode();
-            }
+        if(!ObjectUtils.isEmpty(example)){
+            paramnames[0] = "example";
+            paramvals[0] = new String(ProtoStuffUtil.serialize(example)).hashCode();
+        }
+        if(!ObjectUtils.isEmpty(sort)){
+            paramnames[1] = "sort";
+            paramvals[1] = new String(ProtoStuffUtil.serialize(sort)).hashCode();
         }
 
         String idskey = key("findAll", paramnames, paramvals);
@@ -743,6 +749,13 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
                 }
             }
 
+            List<S> result = null;
+            if(!ObjectUtils.isEmpty(example) && ObjectUtils.isEmpty(sort)){
+                result = super.findAll(example);
+            }
+            if(com.cx.utils.ObjectUtils.allNotNull(example, sort)){
+                result = super.findAll(example, sort);
+            }
             if(CollectionUtils.isEmpty(result)){
                 return result;
             }
@@ -767,18 +780,16 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         }
     }
 
-    private Page<T> findAll(Page<T> result, Pageable pageable, Specification<T> spec) {
+    private Page<T> findAllPageByCache(Pageable pageable, Specification<T> spec) {
         String[] paramnames = new String[2];
         Object[] paramvals = new Object[2];
-        if(com.cx.utils.ObjectUtils.anyNotNull(spec, pageable)){
-            if(!ObjectUtils.isEmpty(spec)){
-                paramnames[0] = "spec";
-                paramvals[0] = new String(ProtoStuffUtil.serialize(spec)).hashCode();
-            }
-            if(!ObjectUtils.isEmpty(pageable)){
-                paramnames[1] = "pageable";
-                paramvals[1] = new String(ProtoStuffUtil.serialize(pageable)).hashCode();
-            }
+        if(!ObjectUtils.isEmpty(spec)){
+            paramnames[0] = "spec";
+            paramvals[0] = new String(ProtoStuffUtil.serialize(spec)).hashCode();
+        }
+        if(!ObjectUtils.isEmpty(pageable)){
+            paramnames[1] = "pageable";
+            paramvals[1] = new String(ProtoStuffUtil.serialize(pageable)).hashCode();
         }
 
         String idskey = key("findAll", paramnames, paramvals);
@@ -798,6 +809,13 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
                 }
             }
 
+            Page<T> result = null;
+            if(!ObjectUtils.isEmpty(pageable) && ObjectUtils.isEmpty(spec)){
+                result = super.findAll(pageable);
+            }
+            if(com.cx.utils.ObjectUtils.allNotNull(spec, pageable)){
+                result = super.findAll(spec, pageable);
+            }
             if(CollectionUtils.isEmpty(result.getContent())){
                 return result;
             }
@@ -822,18 +840,16 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
         }
     }
 
-    private <S extends T> Page<S> findAll(Page<S> result, Example<S> example, Pageable pageable) {
+    private <S extends T> Page<S> findAllPageByCache(Example<S> example, Pageable pageable) {
         String[] paramnames = new String[2];
         Object[] paramvals = new Object[2];
-        if(com.cx.utils.ObjectUtils.anyNotNull(example, pageable)){
-            if(!ObjectUtils.isEmpty(example)){
-                paramnames[0] = "example";
-                paramvals[0] = new String(ProtoStuffUtil.serialize(example)).hashCode();
-            }
-            if(!ObjectUtils.isEmpty(pageable)){
-                paramnames[1] = "pageable";
-                paramvals[1] = new String(ProtoStuffUtil.serialize(pageable)).hashCode();
-            }
+        if(!ObjectUtils.isEmpty(example)){
+            paramnames[0] = "example";
+            paramvals[0] = new String(ProtoStuffUtil.serialize(example)).hashCode();
+        }
+        if(!ObjectUtils.isEmpty(pageable)){
+            paramnames[1] = "pageable";
+            paramvals[1] = new String(ProtoStuffUtil.serialize(pageable)).hashCode();
         }
 
         String idskey = key("findAll", paramnames, paramvals);
@@ -853,6 +869,7 @@ public class BaseJpaRedisRepositoryImpl<T extends RedisEntity<ID>, ID extends Se
                 }
             }
 
+            Page<S> result = super.findAll(example, pageable);
             if(CollectionUtils.isEmpty(result.getContent())){
                 return result;
             }

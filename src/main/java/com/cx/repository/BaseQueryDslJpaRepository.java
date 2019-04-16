@@ -130,7 +130,7 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 	 */
 	@Override
 	public List<T> findAll(Predicate predicate) {
-        return findAll(createQuery(predicate).select(path).fetch(), predicate, null, null);
+        return findAllByCache(predicate, null, null);
 	}
 
 	/*
@@ -139,7 +139,7 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 	 */
 	@Override
 	public List<T> findAll(Predicate predicate, OrderSpecifier<?>... orders) {
-        return findAll(executeSorted(createQuery(predicate).select(path), orders), predicate, null, orders);
+        return findAllByCache(predicate, null, orders);
 	}
 
 	/* 
@@ -148,7 +148,7 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 	 */
 	@Override
 	public List<T> findAll(Predicate predicate, Sort sort) {
-        return findAll(executeSorted(createQuery(predicate).select(path), sort), predicate, sort, null);
+        return findAllByCache(predicate, sort, null);
 	}
 
 	/* 
@@ -157,7 +157,7 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
 	 */
 	@Override
 	public List<T> findAll(OrderSpecifier<?>... orders) {
-        return findAll(executeSorted(createQuery(new Predicate[0]).select(path), orders), null, null, orders);
+        return findAllByCache(null, null, orders);
 	}
 
 	/*
@@ -414,22 +414,20 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
     }
 
 
-    private List<T> findAll(List<T> result, Predicate predicate, Sort sort, OrderSpecifier<?>... orders) {
+    private List<T> findAllByCache(Predicate predicate, Sort sort, OrderSpecifier<?>... orders) {
         String[] paramnames = new String[3];
         Object[] paramvals = new Object[3];
-        if(com.cx.utils.ObjectUtils.anyNotNull(predicate, sort, orders)){
-            if(!ObjectUtils.isEmpty(predicate)){
-                paramnames[0] = "predicate";
-                paramvals[0] = new String(ProtoStuffUtil.serialize(predicate)).hashCode();
-            }
-            if(!ObjectUtils.isEmpty(sort)){
-                paramnames[1] = "sort";
-                paramvals[1] = new String(ProtoStuffUtil.serialize(sort)).hashCode();
-            }
-            if(!ObjectUtils.isEmpty(orders)){
-                paramnames[2] = "orders";
-                paramvals[2] = new String(ProtoStuffUtil.serialize(orders)).hashCode();
-            }
+        if(!ObjectUtils.isEmpty(predicate)){
+            paramnames[0] = "predicate";
+            paramvals[0] = new String(ProtoStuffUtil.serialize(predicate)).hashCode();
+        }
+        if(!ObjectUtils.isEmpty(sort)){
+            paramnames[1] = "sort";
+            paramvals[1] = new String(ProtoStuffUtil.serialize(sort)).hashCode();
+        }
+        if(!ObjectUtils.isEmpty(orders)){
+            paramnames[2] = "orders";
+            paramvals[2] = new String(ProtoStuffUtil.serialize(orders)).hashCode();
         }
 
         String idskey = key("findAll", paramnames, paramvals);
@@ -449,6 +447,19 @@ public class BaseQueryDslJpaRepository<T extends RedisEntity<ID>, ID extends Ser
                 }
             }
 
+            List<T> result = null;
+            if(!ObjectUtils.isEmpty(predicate) && ObjectUtils.isEmpty(sort) && ArrayUtils.isEmpty(orders)){
+                result = createQuery(predicate).select(path).fetch();
+            }
+            if(!ObjectUtils.isEmpty(predicate) && ObjectUtils.isEmpty(sort) && ArrayUtils.isNotEmpty(orders)){
+                result = executeSorted(createQuery(predicate).select(path), orders);
+            }
+            if(!ObjectUtils.isEmpty(predicate) && !ObjectUtils.isEmpty(sort) && ArrayUtils.isEmpty(orders)){
+                result = executeSorted(createQuery(predicate).select(path), sort);
+            }
+            if(ObjectUtils.isEmpty(predicate) && ObjectUtils.isEmpty(sort) && ArrayUtils.isNotEmpty(orders)){
+                result = executeSorted(createQuery(new Predicate[0]).select(path), orders);
+            }
             if(CollectionUtils.isEmpty(result)){
                 return result;
             }
