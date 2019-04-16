@@ -6,7 +6,7 @@
 
     <groupId>com.cx</groupId>
     <artifactId>SpringJPARedis</artifactId>
-    <version>1.0.Beta</version>
+    <version>1.0.RELEASE</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
