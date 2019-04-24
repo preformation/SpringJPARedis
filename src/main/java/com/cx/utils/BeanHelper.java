@@ -32,5 +32,7 @@ public class BeanHelper {
         };
         dateConverter.setPatterns(parsePatterns);
         ConvertUtils.register(dateConverter, Date.class);
+        ConvertUtils.register(new LongConverter(null), Long.class);
+        ConvertUtils.register(new BigDecimalConverter(null), BigDecimal.class);
     }
 }
