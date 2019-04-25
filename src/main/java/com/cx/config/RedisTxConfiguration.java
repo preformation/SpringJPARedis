@@ -116,12 +116,12 @@ public class RedisTxConfiguration extends CachingConfigurerSupport {
 //        jackson2JsonRedisSerializer.setObjectMapper(om);
 
         // 设置value的序列化规则和 key的序列化规则
-        //RedisSerializer<Object> stringRedisSerializer = new StringRedisSerializer();
+        RedisSerializer<Object> stringRedisSerializer = new StringRedisSerializer();
         ProtoStuffRedisSerializer<Object> protoStuffRedisSerializer = new ProtoStuffRedisSerializer<Object>(Object.class);
-        redisTemplate.setKeySerializer(protoStuffRedisSerializer);
+        redisTemplate.setKeySerializer(stringRedisSerializer);
         redisTemplate.setValueSerializer(protoStuffRedisSerializer);
-        redisTemplate.setHashKeySerializer(protoStuffRedisSerializer);
-        redisTemplate.setHashValueSerializer(protoStuffRedisSerializer);
+        redisTemplate.setHashKeySerializer(stringRedisSerializer);
+        redisTemplate.setHashValueSerializer(stringRedisSerializer);
 
         // explicitly enable transaction support
         redisTemplate.setEnableTransactionSupport(true);
