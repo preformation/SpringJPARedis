@@ -23,6 +23,8 @@ public class BeanHelper {
     }
 
     public static void registerConvertUtils() {
+        ConvertUtils.register(new StringConverter(), String.class);
+        //date
         DateConverter dateConverter = new DateConverter(null);
         String[] parsePatterns = {
                 "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm:ss.S", "yyyy-MM-dd HH:mm", "yyyy-MM-dd HH",
@@ -32,7 +34,20 @@ public class BeanHelper {
         };
         dateConverter.setPatterns(parsePatterns);
         ConvertUtils.register(dateConverter, Date.class);
+        SqlTimeConverter sqlTimeConverter = new SqlTimeConverter(null);
+        sqlTimeConverter.setPatterns(parsePatterns);
+        ConvertUtils.register(sqlTimeConverter, Time.class);
+        SqlTimestampConverter sqlTimestampConverter = new SqlTimestampConverter(null);
+        sqlTimestampConverter.setPatterns(parsePatterns);
+        ConvertUtils.register(sqlTimestampConverter, Timestamp.class);
+        //number
+        ConvertUtils.register(new BooleanConverter(null), Boolean.class);
+        ConvertUtils.register(new ShortConverter(null), Short.class);
+        ConvertUtils.register(new IntegerConverter(null), Integer.class);
         ConvertUtils.register(new LongConverter(null), Long.class);
+        ConvertUtils.register(new FloatConverter(null), Float.class);
+        ConvertUtils.register(new DoubleConverter(null), Double.class);
         ConvertUtils.register(new BigDecimalConverter(null), BigDecimal.class);
+        ConvertUtils.register(new BigIntegerConverter(null), BigInteger.class);
     }
 }
